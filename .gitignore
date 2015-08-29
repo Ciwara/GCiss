@@ -1,0 +1,11 @@
+*~*
+*pyc
+*.orig
+*.db
+*.exe
+doc/
+*.pdf
+*.xls
+media/img_prod/
+txt_export.py
+txt_import.py
