@@ -74,10 +74,13 @@ class Product(BaseModel):
         FileJoin, null=True, related_name='file_joins_products')
 
     def __str__(self):
-        return self.name
+        return u"{}".format(self.name)
 
     def __unicode__(self):
-        return self.name
+        return u"{}".format(self.name)
+
+    def display_name(self):
+        return "{}".format(self.name)
 
     def save(self):
         self.code = self.code if self.code else self.name.lower().replace(
@@ -122,13 +125,13 @@ class Payment(BaseModel):
     class Meta:
         order_by = ('date',)
 
-    DEBIT = "Débit"
-    CREDIT = "Crédit"
+    DEBIT = "Debit"
+    CREDIT = "Credit"
 
     DC = [DEBIT, CREDIT]
 
     owner = ForeignKeyField(Owner, verbose_name=("Utilisateur"))
-    date = DateTimeField(verbose_name=("Date"), default=now)
+    date = DateTimeField(verbose_name=("Date"))
     debit = IntegerField(verbose_name=("Débit"))
     credit = IntegerField(verbose_name=("Crédit"))
     libelle = CharField(verbose_name=("Libelle"), null=True)
@@ -136,44 +139,68 @@ class Payment(BaseModel):
     type_ = CharField(choices=DC)
     deleted = BooleanField(default=False)
 
-    def __str__(self, arg):
-        return "{libelle} {date} {type_} de {balance}".format(
+    def __unicode__(self):
+        return "Le {date} {type_} d'un montant de {amount} Fcfa".format(
             date=self.date.strftime(FDATE), type_=self.type_,
-            balance=self.balance, libelle=self.libelle)
+            amount=self.credit if self.type_ == self.CREDIT else self.debit, lib=self.libelle)
+
+    def __str__(self):
+        return self.__unicode__()
+
+    def display_name(self):
+        return self.__unicode__()
 
     def save(self):
         """
         Calcul du balance en stock après une operation."""
         self.owner = Owner.get(Owner.islog == True)
         print("SAVE BEGIN")
-        previous_balance = int(self.last_balance_payment())
-        print("previous_balance: ", previous_balance)
-        # amount = int(self.amount)
-        print("type :", self.type_)
+        previous_balance = int(
+            self.last_balance_payment().balance if self.last_balance_payment() else 0)
         if self.type_ == self.CREDIT:
-            print("credit")
             self.balance = previous_balance + int(self.credit)
             self.debit = 0
         if self.type_ == self.DEBIT:
-            print("debit")
             self.balance = previous_balance - int(self.debit)
             self.credit = 0
 
         super(Payment, self).save()
+
+        if self.next_rpt():
+            self.next_rpt().save()
+
+    def next_rpt(self):
         try:
-            next_rpt = Payment.select().where(Payment.date > self.date,
-                                              Payment.deleted == False).order_by(Payment.date.asc()).get()
-            next_rpt.save()
+            return self.next_rpts().get()
+        except:
+            return None
+
+    def next_rpts(self):
+        try:
+            return Payment.select().where(Payment.date > self.date,
+                                          Payment.deleted == False).order_by(Payment.date.asc())
         except Exception as e:
-            # print("next_rpt", e)
-            pass
+            return None
+            print("next_rpt", e)
+
+    def deletes_data(self):
+        last = self.last_balance_payment()
+        next_ = self.next_rpt()
+        self.delete_instance()
+        if last:
+            last.save()
+        else:
+            if next_:
+                next_.save()
+        return
 
     def last_balance_payment(self):
         try:
-            return Payment.select().where(Payment.deleted == False).order_by(Payment.date.desc()).get().balance
+            return Payment.select().where(
+                Payment.deleted == False, Payment.date < self.date).order_by(Payment.date.desc()).get()
         except Exception as e:
             print("last_balance_payment", e)
-            return 0
+            return None
 
 
 class ProviderOrClient(BaseModel):
@@ -199,6 +226,20 @@ class ProviderOrClient(BaseModel):
     type_ = CharField(max_length=30, choices=TYPES, default=CLT)
     picture = ForeignKeyField(
         FileJoin, null=True, related_name='file_joins_pictures', verbose_name=("image de la societe"))
+
+    def invoices(self):
+        return Invoice.select().where(ProviderOrClient == self)
+
+    def buys(self):
+        return Buy.select().where(ProviderOrClient == self)
+
+    def invoices_items(self):
+        return Report.select().where(Report.type_ == Report.S,
+                                     ProviderOrClient == self)
+
+    def buys_items(self):
+        return Report.select().where(Report.type_ == Report.E,
+                                     ProviderOrClient == self)
 
     def __str__(self):
         return u"{}".format(self.name)
@@ -241,15 +282,16 @@ class Invoice(BaseModel):
         return "{num}/{client}/{owner}".format(num=self.number, owner=self.owner,
                                                client=self.client)
 
-    @classmethod
-    def get_next_number(cls, org):
+    @property
+    def get_next_number(self):
         """ Get a valid number automatically incremented from
             the higher one.
         """
         number = 1
-        if Invoice.select().count():
-            number += int(Invoice.latest('number').number)
-        return number
+        if Invoice.select().count() > 1:
+            number = int(Invoice.select().order_by(Invoice.number.desc()
+                                                   ).get().number) + 1
+        return str(number)
 
     @property
     def items(self):
@@ -259,11 +301,10 @@ class Invoice(BaseModel):
     def date(self):
         return self.items.first().date
 
-    def deletes(self):
-        self.delete_instance()
+    def deletes_data(self):
         for rep in self.items:
-            rep.delete()
-            rep.delete_instance()
+            rep.deletes_data()
+        self.delete_instance()
 
     def display_name(self):
         return u"Facture N: {num} de {client} au {date}".format(num=self.number,
@@ -300,62 +341,10 @@ class Buy(BaseModel):
         return Report.filter(invoice=False,
                              product=product).order_by(Report.date.desc()).get()
 
-
-class Refund(BaseModel):
-
-    class Meta:
-        order_by = ('date',)
-
-    """docstring for ClassName"""
-
-    owner = ForeignKeyField(Owner, verbose_name=("Utilisateur"))
-    provider_client = ForeignKeyField(ProviderOrClient)
-    date = DateTimeField(default=now)
-    amount = IntegerField(verbose_name="Montant")
-
-    def save(self):
-        """Calcul du remboursement après une operation."""
-        # print("SAVE BEGIN")
-        previous_balance = int(last_balance_payment())
-        amount = int(self.amount)
-        if self.type_ == self.CREDIT:
-            self.balance = previous_balance + amount
-        if self.type_ == self.DEBIT:
-            self.balance = previous_balance - amount
-            if self.balance < 0:
-                raise_error(u"Erreur",
-                            u"On peut pas utilisé %d puis qu'il ne reste que %d"
-                            % (self.amount, previous_balance))
-                return False
-
-        super(Refund, self).save()
-        try:
-            next_rpt = Refund.select().where(Refund.date > self.date,
-                                             Refund.deleted == False).order_by(Refund.date.asc()).get()
-            next_rpt.save()
-        except Exception as e:
-            # print("next_rpt", e)
-            pass
-
-    def last_balance_payment(self):
-        try:
-            return Refund.select().where(Refund.deleted == False).order_by(Refund.date.desc()).get().balance
-        except Exception as e:
-            print("last_balance_payment", e)
-            return 0
-
-    @property
-    def payment(self):
-        return Refund.select().where(Refund.deleted == False)
-        super(save, self).save()
-
-    def __str__(self):
-        return "{owner}{amount}{date}".format(
-            owner=self.owner, date=self.date, amount=self.amount)
-
-    def __unicode__(self):
-        return "{owner}{amount}{date}".format(
-            owner=self.owner, date=self.date, amount=self.amount)
+    def deletes_data(self):
+        for rep in self.items:
+            rep.deletes_data()
+        self.delete_instance()
 
 
 class Report(BaseModel):
@@ -389,6 +378,10 @@ class Report(BaseModel):
                                                    store=self.store,
                                                    product=self.product)
 
+    def display_name(self):
+        return u"Le porduit {product} enregistré le {date}".format(
+            product=self.product.name, date=self.date.strftime(FDATE))
+
     def save(self):
         """
         Calcul du restant en stock après une operation."""
@@ -405,10 +398,14 @@ class Report(BaseModel):
                     u"On peut pas utilisé {} puis qu'il ne reste que {}".format(self.qty, prev_remaining))
         super(Report, self).save()
 
+        if self.next_rpt():
+            self.next_rpt().save()
+
+    def next_rpt(self):
         try:
-            self.next_rpts().get().save()
+            return self.next_rpts().get()
         except:
-            pass
+            return None
 
     def next_rpts(self):
         return Report.select().filter(Report.product == self.product,
@@ -416,14 +413,24 @@ class Report(BaseModel):
                                       Report.date > self.date,
                                       Report.deleted == False).order_by(Report.date.asc())
 
+    def deletes_data(self):
+        last = self.last_report
+        next_ = self.next_rpt()
+        self.delete_instance()
+        if last:
+            last.save()
+        else:
+            if next_:
+                next_.save()
+        return
+
     @property
     def last_report(self):
-        last_reports = Report.select().where(Report.product == self.product,
-                                             Report.store == self.store,
-                                             Report.date < self.date,
-                                             Report.deleted == False).order_by(Report.date.desc())
         try:
-            return last_reports.get()
+            return Report.select().where(Report.product == self.product,
+                                         Report.store == self.store,
+                                         Report.date < self.date,
+                                         Report.deleted == False).order_by(Report.date.desc()).get()
         except:
             return None
 
@@ -434,3 +441,56 @@ class Report(BaseModel):
     def last_price(self):
         if self.is_out_rpt and self.last_report:
             return int(self.last_report.selling_price)
+
+
+class Refund(BaseModel):
+
+    class Meta:
+        order_by = ('date',)
+
+    """docstring for ClassName"""
+
+    owner = ForeignKeyField(Owner, verbose_name=("Utilisateur"))
+    provider_client = ForeignKeyField(ProviderOrClient)
+    date = DateTimeField(default=now)
+    amount = IntegerField(verbose_name="Montant")
+    remaining = IntegerField(verbose_name="Reste à payer")
+
+    def save(self):
+        """Calcul du remboursement après une operation."""
+        # print("SAVE BEGIN")
+        previous_remaining = int(last_remaining())
+        amount = int(self.amount)
+        if self.type_ == self.CREDIT:
+            self.remaining = previous_remaining + amount
+        if self.type_ == self.DEBIT:
+            self.remaining = previous_remaining - amount
+            if self.remaining < 0:
+                raise_error(u"Erreur",
+                            u"On peut pas utilisé %d puis qu'il ne reste que %d"
+                            % (self.amount, previous_remaining))
+                return False
+
+        super(Refund, self).save()
+        try:
+            next_rpt = Refund.select().where(Refund.date > self.date,
+                                             Refund.deleted == False).order_by(Refund.date.asc()).get()
+            next_rpt.save()
+        except Exception as e:
+            # print("next_rpt", e)
+            pass
+
+    def last_remaining(self):
+        try:
+            return Refund.select().where(Refund.deleted == False).order_by(Refund.date.desc()).get().balance
+        except Exception as e:
+            print("last_remaining", e)
+            return 0
+
+    def __str__(self):
+        return "{owner}{amount}{date}".format(
+            owner=self.owner, date=self.date, amount=self.amount)
+
+    def __unicode__(self):
+        return "{owner}{amount}{date}".format(
+            owner=self.owner, date=self.date, amount=self.amount)

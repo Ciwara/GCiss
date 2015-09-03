@@ -8,29 +8,23 @@ from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout, QGridLayout, QDialog)
 from PyQt4.QtCore import Qt
 
 from Common.ui.common import FWidget, FPageTitle, Button, FLabel
-from Common.ui.util import raise_success, raise_error
-from data_helper import suppression
 
 
 class DeleteViewWidget(QDialog, FWidget):
 
-    def __init__(self, report, parent, *args, **kwargs):
+    def __init__(self, table_p, obj, parent, *args, **kwargs):
         QDialog.__init__(self, parent, *args, **kwargs)
 
         self.setWindowTitle(u"Confirmation de le suppression")
         self.title = FPageTitle(u"Voulez vous vraiment le supprimer?")
-        self.rep = report
-        self.title.setAlignment(Qt.AlignHCenter)
+        self.obj = obj
+        self.parent = parent
+        # self.title.setAlignment(Qt.AlignHCenter)
         title_hbox = QHBoxLayout()
         title_hbox.addWidget(self.title)
         report_hbox = QGridLayout()
 
-        report_hbox.addWidget(FLabel(u"Le porduit %(product)s "
-                                     u"enregistré le %(date)s" %
-                                     {"product": self.rep.product
-                                      .name, "date": self.rep
-                                      .date
-                                      .strftime('%x %Hh:%Mmn')}), 0, 0)
+        report_hbox.addWidget(FLabel(obj.display_name()), 0, 0)
         # delete and cancel hbox
         Button_hbox = QHBoxLayout()
 
@@ -55,14 +49,6 @@ class DeleteViewWidget(QDialog, FWidget):
         return False
 
     def delete(self):
-        invoice = self.rep.invoice
-        if not invoice:
-            # from gestionreports import ApricotsViewWidget
-            suppression(self.rep)
-            self.cancel()
-            # self.change_main_context(ApricotsViewWidget)
-            raise_success(
-                u"Confirmation", u"<b>le rapport à été bien supprimé</b>")
-        else:
-            raise_error(u"Erreur", u"Pour supprimer ce rapport il faut"
-                        u" annuler la facture N°: %s" % invoice.number)
+        self.obj.deletes_data()
+        self.cancel()
+        self.parent.Notify("le rapport à été bien supprimé", "error")

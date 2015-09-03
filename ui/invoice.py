@@ -14,14 +14,13 @@ from Common.ui.util import (check_is_empty, formatted_number, is_int,
                             SystemTrayIcon, date_to_datetime, field_error, check_field)
 from Common.ui.table import FTableWidget, TotalsWidget
 from Common.ui.common import (FWidget, FBoxTitle, ErrorLabel, LineEdit,
-                              FLabel, FormatDate, Button_menu, FLabel,
+                              FLabel, FormatDate, FLabel,
                               IntLineEdit, BttSmall, ExtendedComboBox)
 from Common.peewee import fn
 
 from GCommon.ui._product_detail import InfoTableWidget
 from ui.invoice_show import ShowInvoiceViewWidget
 from configuration import Config
-from data_helper import lastes_reports
 from models import (Product, Invoice, Owner, Report, ProviderOrClient)
 
 try:
@@ -41,8 +40,9 @@ class InvoiceViewWidget(FWidget):
         vbox = QVBoxLayout(self)
         hbox = QHBoxLayout(self)
         editbox = QGridLayout()
-        self.num_invoice = IntLineEdit("%d" % (
-            Invoice.select().count() + 1))
+        next_number = int(
+            Invoice.select().order_by(Invoice.number.desc()).get().number) + 1
+        self.num_invoice = IntLineEdit(str(next_number))
         self.num_invoice.setToolTip(u"Le numéro")
         self.num_invoice.setMaximumSize(
             40, self.num_invoice.maximumSize().height())
@@ -90,7 +90,7 @@ class InvoiceViewWidget(FWidget):
         editbox.addWidget(self.num_invoice, 0, 3)
         editbox.addWidget(FLabel(u"Doit :"), 1, 2)
         editbox.addWidget(self.name_client_field, 1, 3)
-        editbox.addWidget(self.add_clt_btt, 1, 4)
+        # editbox.addWidget(self.add_clt_btt, 1, 4)
         editbox.addWidget(self.invoice_date, 0, 6)
         editbox.setColumnStretch(5, 2)
         splitter = QSplitter(Qt.Horizontal)
@@ -128,7 +128,6 @@ class InvoiceViewWidget(FWidget):
 
     def is_valide(self):
         print("is_valide")
-
         try:
             self.name_client, self.phone = self.name_client_field.lineEdit().text().split(
                 ",")
@@ -294,7 +293,7 @@ class InvoiceTableWidget(FTableWidget):
     def extend_rows(self):
         nb_rows = self.rowCount()
         self.setRowCount(nb_rows + 1)
-        self.setSpan(nb_rows, 0, 1, 2)
+        # self.setSpan(nb_rows, 0, 1, 2)
         self.setItem(nb_rows, 2, TotalsWidget(u"Montant"))
         monttc = TotalsWidget(formatted_number(u"%d" % 0))
         monttc.setTextAlignment(Qt.AlignRight)
@@ -302,7 +301,7 @@ class InvoiceTableWidget(FTableWidget):
 
         nb_rows += 1
         self.setRowCount(nb_rows + 1)
-        self.setSpan(nb_rows, 0, 1, 3)
+        # self.setSpan(nb_rows, 0, 1, 3)
         bicon = QIcon.fromTheme(
             '', QIcon(u"{}save.png".format(Config.img_media)))
         self.button = QPushButton(bicon, u"Enregistrer")
@@ -359,9 +358,9 @@ class InvoiceTableWidget(FTableWidget):
                 return
             if check_is_empty(self.parent.name_client_field.lineEdit()):
                 return
-            if check_field(self.parent.invoice_date,
-                           "Le {} est Inférieure à la date de la dernière rapport (<b>{}</b>)".format(date_to_datetime(invoice_date), last_report.date), (last_report.date > date_to_datetime(invoice_date))):
-                return
+            # if check_field(self.parent.invoice_date,
+            #                "Le {} est Inférieure à la date de la dernière rapport (<b>{}</b>)".format(date_to_datetime(invoice_date), last_report.date), (last_report.date > date_to_datetime(invoice_date))):
+            #     return
             if (pusaisi and check_is_empty(self.cellWidget(row_num, 1))):
                 return
             if (pusaisi and check_is_empty(self.cellWidget(row_num, 2))):

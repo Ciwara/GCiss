@@ -4,7 +4,7 @@
 from __future__ import (
     unicode_literals, absolute_import, division, print_function)
 
-from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout,
+from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout, QWidget,
                          QIcon, QGridLayout, QSplitter, QFrame, QMessageBox,
                          QPushButton, QMenu, QCompleter, QPixmap)
 from PyQt4.QtCore import Qt
@@ -13,8 +13,9 @@ from configuration import Config
 from models import Invoice, Report
 from tools.export_pdf import pdf_view
 from tools.export_xls import write_invoice_xls
+
 from Common.ui.util import formatted_number, is_int, uopen_file
-from Common.ui.common import FWidget, FPageTitle, FLabel, LineEdit
+from Common.ui.common import FWidget, FPageTitle, FLabel, LineEdit, Deleted_btt
 from Common.ui.table import FTableWidget, TotalsWidget
 
 from Common.exports_xls import export_dynamic_data
@@ -34,11 +35,8 @@ class ShowInvoiceViewWidget(FWidget):
         vbox = QVBoxLayout()
         self.title = u"Facture"
 
-        tablebox = QVBoxLayout()
         self.table_show = ShowOrderTableWidget(parent=self)
-        tablebox.addWidget(self.table_show)
 
-        formbox = QVBoxLayout()
         editbox = QGridLayout()
         xls_bicon = QIcon.fromTheme(
             'document-del', QIcon(u"{}xls.png".format(Config.img_cmedia)))
@@ -52,28 +50,31 @@ class ShowInvoiceViewWidget(FWidget):
         self.button_xls.setFixedHeight(30)
         self.button_pdf.released.connect(self.printer_pdf)
         self.button_xls.released.connect(self.export_xls)
+        self.button_dl = Deleted_btt(u"Annuler la facture")
+        self.button_dl.released.connect(self.cancellation)
 
-        editbox.addWidget(FLabel(u"Facture N°: %s"
-                                 % self.invoice.number), 0, 0)
+        editbox.addWidget(FLabel(u"{typ} N°: {num}".format(
+            num=self.invoice.number, typ=self.invoice.type_)), 0, 0)
         editbox.addWidget(FLabel(u"%s le %s" % (self.invoice.location,
                                                 self.invoice.date.strftime(u'%x'))), 1, 4)
         editbox.addWidget(FLabel(u"Doit: %s " % self.invoice.client), 1, 0)
-        editbox.addWidget(self.button_pdf, 1, 5)
+        # editbox.addWidget(self.button_pdf, 1, 5)
+        editbox.addWidget(self.button_dl, 0, 4)
         editbox.addWidget(self.button_xls, 1, 6)
 
-        formbox.addLayout(editbox)
-        vbox.addLayout(formbox)
-        vbox.addLayout(tablebox)
+        vbox.addLayout(editbox)
+        vbox.addWidget(self.table_show)
         self.setLayout(vbox)
 
     def export_xls(self):
 
         from Common.cel import cel
         table = self.table_show
-        endrowx = len(table.hheaders) - 1
+        hheaders = table.hheaders[:-1]
+        endrowx = len(hheaders) - 1
         dict_data = {
             'file_name': "facture.xls",
-            'headers': table.hheaders,
+            'headers': hheaders,
             'data': table.data,
             "extend_rows": [(3, table.montant_ht)],
             'sheet': self.title,
@@ -81,21 +82,20 @@ class ShowInvoiceViewWidget(FWidget):
             'widths': table.stretch_columns,
             "date": self.invoice.date.strftime(u'%x'),
             "others": [
-                (5, 5, 0, 2, "Doit: {}".format(self.invoice.client)),
+                (4, 4, 0, 2, "Doit: {}".format(self.invoice.client)),
                 (45, 45, 0, endrowx,
                  "Arrêté la présente facture à la somme de : {} FCFA".format(cel(table.montant_ht))),
                 (50, 50, 0, 0, "Pour acquit"),
-                (50, 50, endrowx, endrowx, "Le fournisseur")]
+                (50, 50, endrowx, endrowx, "Le fournisseur")],
+            'exclude_row': len(table.data) - 2,
         }
         export_dynamic_data(dict_data)
-    # def printer_xls(self):
-    #     write_invoice_xls("invoice.xls", self.invoice)
 
     def printer_pdf(self):
         pdf_report = pdf_view("invoice.pdf", self.invoice)
         uopen_file(pdf_report)
 
-    def annulation(self):
+    def cancellation(self):
         reply = QMessageBox.question(self, 'Confirmation',
                                      u"<h2 style='color:red;'>Voulez vous vraiment annuler cette"
                                      u" facture?</h2>",
@@ -104,11 +104,7 @@ class ShowInvoiceViewWidget(FWidget):
 
         if reply == QMessageBox.Yes:
             from ui.dashboard import DashbordViewWidget
-            rep = Report()
-            rep.store = 1
-            for item in Report.filter(invoice=self.invoice):
-                item.delete_instance()
-            self.invoice.delete_instance()
+            self.invoice.deletes_data()
             self.change_main_context(DashbordViewWidget)
 
 
@@ -120,13 +116,18 @@ class ShowOrderTableWidget(FTableWidget):
         self.parent = parent
 
         self.hheaders = [_(u"Quantité"), _(u"Désignation"), _(u"Prix Unitaire"),
-                         _(u"Montant")]
+                         _(u"Montant"), ""]
+
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.popup)
+
         self.stretch_columns = [1, 3]
         self.align_map = {2: 'r', 3: 'r'}
         self.max_rows = 100
         # self.display_vheaders = False
         self.display_fixed = True
         self.refresh_()
+        self.hideColumn(len(self.hheaders) - 1)
 
     def refresh_(self):
         """ """
@@ -134,7 +135,7 @@ class ShowOrderTableWidget(FTableWidget):
         self.set_data_for()
         self.refresh()
 
-        pw = self.parent.parent.page_width() / 5
+        pw = (self.parent.parent.page_width() / 5) - 20
         self.setColumnWidth(0, pw)
         self.setColumnWidth(1, pw * 2)
         self.setColumnWidth(2, pw)
@@ -145,31 +146,48 @@ class ShowOrderTableWidget(FTableWidget):
         items = self.parent.invoice.items if self.parent.invoice.items else []
 
         self.data = [(item.qty, item.product.name, item.selling_price,
-                      item.qty * item.selling_price) for item in items]
+                      item.qty * item.selling_price, item.id) for item in items]
+
+    def popup(self, pos):
+
+        from ui.ligne_edit import EditLigneViewWidget
+        from ui.deleteview import DeleteViewWidget
+        from data_helper import check_befor_update_data
+
+        if (len(self.data) - 1) < self.selectionModel().selection().indexes()[0].row():
+            return False
+        menu = QMenu()
+        editaction = menu.addAction("Modifier cette ligne")
+        delaction = menu.addAction("Supprimer cette ligne")
+        action = menu.exec_(self.mapToGlobal(pos))
+        row = self.selectionModel().selection().indexes()[0].row()
+        report = Report.get(id=self.data[row][-1])
+        if action == editaction:
+            try:
+                self.parent.open_dialog(EditLigneViewWidget, modal=True,
+                                        table_p=self, report=report)
+            except IndexError:
+                pass
+
+        if action == delaction:
+            if check_befor_update_data(report):
+                self.parent.open_dialog(DeleteViewWidget, modal=True,
+                                        table_p=self, report=report)
+            else:
+                from Common.ui.util import raise_error
+                raise_error(u"Erreur", u"Impossible de supprimer ce rapport car"
+                            u" le restant sera : <b>%s</b> qui est < 0" % remaining)
 
     def extend_rows(self):
 
         nb_rows = self.rowCount()
-        self.setRowCount(nb_rows + 3)
-        self.setSpan(nb_rows, 0, 3, 2)
-        mtt_ttc = TotalsWidget(u"Total: ")
-        mtt_ttc.setTextAlignment(Qt.AlignRight)
-        self.setItem(nb_rows + 1, 2, mtt_ttc)
+        self.setRowCount(nb_rows + 1)
+        self.setSpan(nb_rows, 0, 2, 2)
+        self.setItem(nb_rows, 2, TotalsWidget(u"Totaux : "))
 
         self.montant_ht = 0
         for row_num in xrange(0, self.data.__len__()):
-            qty = is_int(self.item(row_num, 0).text())
-            pu = is_int(self.item(row_num, 2).text())
-            self.montant_ht += (qty * pu)
-        # Montant TTC
-        montant_ttc_item = TotalsWidget(formatted_number(self.montant_ht))
-        montant_ttc_item.setTextAlignment(Qt.AlignRight)
-        self.setItem(row_num + 2, 3, montant_ttc_item)
-
-        # bicon = QIcon.fromTheme(
-        #     'document-del', QIcon(u"{}del.png".format(Config.img_media)))
-        # self.button = QPushButton(bicon, u"Annuler la facture")
-        # self.button.released.connect(self.parent.annulation)
-        # self.setCellWidget(nb_rows + 2, 3, self.button)
-
-        # self.setColumnWidth(1, 250)
+            self.montant_ht += (is_int(self.item(row_num, 0).text())
+                                * is_int(self.item(row_num, 2).text()))
+        self.setItem(
+            row_num + 1, 3, TotalsWidget(formatted_number(self.montant_ht)))

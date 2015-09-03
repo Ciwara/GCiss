@@ -8,7 +8,7 @@ from __future__ import (
 
 from datetime import datetime
 
-from PyQt4.QtGui import (QVBoxLayout, QGridLayout, QIcon)
+from PyQt4.QtGui import (QVBoxLayout, QGridLayout, QIcon, QMenu)
 from PyQt4.QtCore import Qt
 
 from configuration import Config
@@ -70,7 +70,7 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
     def export_xls(self):
         dict_data = {
             'file_name': "versement.xls",
-            'headers': self.table.hheaders,
+            'headers': self.table.hheaders[:-1],
             'data': self.table.data,
             "extend_rows": [(1, self.table.label_mov_tt),
                             (2, self.table.totals_debit),
@@ -81,17 +81,20 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
             'sheet': self.title,
             'title': self.title,
             'widths': self.table.stretch_columns,
+            'exclude_row': len(self.table.data) - 1,
             # "date": self.table.date.strftime(u"%x")
         }
         export_dynamic_data(dict_data)
 
     def add_payment(self):
+        print("add_payment")
         self.open_dialog(EditOrAddPaymentrDialog, modal=True,
-                         payment=None, type_=Payment.CREDIT, table_p=self)
+                         payment=None, type_=Payment.CREDIT, table_p=self.table)
 
     def sub_payment(self):
+        print("sub_payment")
         self.open_dialog(EditOrAddPaymentrDialog, modal=True,
-                         payment=None, type_=Payment.DEBIT, table_p=self)
+                         payment=None, type_=Payment.DEBIT, table_p=self.table)
 
 
 class RapportTableWidget(FTableWidget):
@@ -101,17 +104,21 @@ class RapportTableWidget(FTableWidget):
         FTableWidget.__init__(self, parent=parent, *args, **kwargs)
 
         self.hheaders = [
-            u"Date", u"Libelle opération", u"débit", u"Crédit", u"Solde"]
+            u"Date", u"Libelle opération", u"débit", u"Crédit", u"Solde", ""]
+
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.popup)
 
         self.parent = parent
 
         self.sorter = True
-        self.stretch_columns = [0, 1, 4]
+        self.stretch_columns = [0, 1, 5]
         self.align_map = {0: 'l', 1: 'l', 2: 'r', 3: 'r', 4: 'r'}
         self.ecart = -5
         self.display_vheaders = False
         self.set_data_for()
         self.refresh()
+        self.hideColumn(len(self.hheaders) - 1)
 
     def refresh_(self):
         """ """
@@ -122,10 +129,29 @@ class RapportTableWidget(FTableWidget):
     def set_data_for(self):
 
         self.data = [(show_date(pay.date), pay.libelle, pay.debit, pay.credit,
-                      pay.balance) for pay in Payment.select().order_by(Payment.date.asc())]
+                      pay.balance, pay.id) for pay in Payment.select().order_by(Payment.date.asc())]
 
-    def click_item(self, row, column, *args):
-        product_column = 1
+    def popup(self, pos):
+
+        from ui.ligne_edit import EditLigneViewWidget
+        from ui.deleteview import DeleteViewWidget
+        from data_helper import check_befor_update_payment
+
+        if (len(self.data) - 1) < self.selectionModel().selection().indexes()[0].row():
+            return False
+        menu = QMenu()
+        editaction = menu.addAction("Modifier cette ligne")
+        delaction = menu.addAction("Supprimer cette ligne")
+        action = menu.exec_(self.mapToGlobal(pos))
+        row = self.selectionModel().selection().indexes()[0].row()
+        payment = Payment.get(id=self.data[row][-1])
+        if action == editaction:
+            self.parent.open_dialog(EditOrAddPaymentrDialog, modal=True,
+                                    payment=payment, table_p=self)
+
+        if action == delaction:
+            self.parent.open_dialog(DeleteViewWidget, modal=True,
+                                    table_p=self, obj=payment)
 
     def extend_rows(self):
 

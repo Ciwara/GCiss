@@ -21,6 +21,7 @@ from ui.inventory import InventoryViewWidget
 from ui.period_by import PeriodByViewWidget
 from ui.stats import StatViewWidget
 from ui.payment import PaymentViewWidget
+from ui.debt_manager import DebtsViewWidget
 
 
 class MenuToolBar(QToolBar, FWidget):
@@ -57,7 +58,11 @@ class MenuToolBar(QToolBar, FWidget):
                  "icon": 'State', "goto": StatViewWidget},
                 {"name": u"Versement", "admin": True,
                  "icon": 'reports', "goto": PaymentViewWidget},
-                {"name": u"Inventaire", "admin": True,  "icon": 'inventory', "goto": InventoryViewWidget}, ]
+                {"name": u"Inventaire", "admin": True,
+                 "icon": 'inventory', "goto": InventoryViewWidget},
+                {"name": u"Dettes", "admin": True,
+                 "icon": 'debt', "goto": DebtsViewWidget},
+                ]
 
         for m in menu:
             self.addSeparator()

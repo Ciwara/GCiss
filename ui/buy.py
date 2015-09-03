@@ -135,7 +135,8 @@ class BuyViewWidget(FWidget):
             rep.selling_price = int(selling_price)
             try:
                 rep.save()
-            except:
+            except Exception as e:
+                print(e)
                 err = True
         if err:
             buy.delete_instance()

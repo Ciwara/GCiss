@@ -14,7 +14,6 @@ from Common.ui.util import show_date
 
 from models import Invoice, Buy
 from configuration import Config
-from data_helper import lastes_reports
 
 from ui.invoice_show import ShowInvoiceViewWidget
 
@@ -94,10 +93,11 @@ class InvoiceTableWidget(FTableWidget):
         self.setColumnWidth(2, pw)
 
     def set_data_for(self, value):
-        if not value:
-            print("is value")
-            invoices = Invoice.select().order_by(Invoice.number.desc())
-        else:
+        # if not value:
+        #     print("is value")
+        invoices = Invoice.select().order_by(Invoice.number.desc())
+        if value:
+
             qs = (Invoice.location.contains(value) |
                   # Invoice.date.contains(value) |
                   Invoice.client.contains(value))
@@ -105,18 +105,19 @@ class InvoiceTableWidget(FTableWidget):
                 qs = qs | (Invoice.number.contains(int(value)))
             except Exception as e:
                 print(e)
-            invoices = Invoice.filter(qs).execute()
+            invoices = invoices.where(qs).execute()
             print(invoices)
         try:
             self.data = [(invoice.number, show_date(invoice.date),
-                          invoice.client, "") for invoice in invoices.select()]
+                          invoice.client, "") for invoice in invoices]
         except Exception as e:
             print(e)
 
     def _item_for_data(self, row, column, data, context=None):
         if column == self.data[0].__len__() - 1:
-            return QTableWidgetItem(QIcon(u"{img_media}{img}".format(img_media=Config.img_cmedia,
-                                                                     img="go-next.png")), (u"voir"))
+            return QTableWidgetItem(
+                QIcon(u"{img_media}{img}".format(img_media=Config.img_cmedia,
+                                                 img="go-next.png")), (u"voir"))
 
         return super(InvoiceTableWidget, self)._item_for_data(row, column,
                                                               data, context)
@@ -158,7 +159,8 @@ class BuyTableWidget(FTableWidget):
     def _item_for_data(self, row, column, data, context=None):
         if column == self.data[0].__len__() - 1:
             return QTableWidgetItem(
-                QIcon(u"{img_media}{img}".format(img_media=Config.img_cmedia, img="go-next.png")), (u"voir"))
+                QIcon(u"{img_media}{img}".format(img_media=Config.img_cmedia,
+                                                 img="go-next.png")), (u"voir"))
 
         return super(BuyTableWidget, self)._item_for_data(row, column,
                                                           data, context)

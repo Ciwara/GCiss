@@ -81,8 +81,8 @@ class InventaireTableWidget(FTableWidget):
     def __init__(self, parent, *args, **kwargs):
         FTableWidget.__init__(self, parent=parent, *args, **kwargs)
 
-        self.hheaders = [u"Désignation", u"Qtité restante", u"Prix U. achat",
-                         u"Montant"]
+        self.hheaders = [
+            u"Désignation", u"Qtité restante", u"P.U. vente", u"Montant"]
 
         self.parent = parent
 

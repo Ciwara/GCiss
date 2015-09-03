@@ -11,15 +11,15 @@ from PyQt4.QtGui import QVBoxLayout, QGridLayout, QCheckBox
 from PyQt4.QtCore import Qt, QDate, SIGNAL
 
 from configuration import Config
-from data_helper import date_to_datetime
 from models import Product
-from tools.export_xls import write_order_xls
 
 from Common.ui.table import FTableWidget
-from Common.ui.util import raise_success, raise_error
+from Common.ui.util import raise_success, raise_error, date_to_datetime
 from Common.ui.common import (FWidget, FPageTitle, FormLabel, BttExportXLS,
                               IntLineEdit, Button_save, FormatDate, Deleted_btt)
+
 from ui.order_remove_save import OrderRemoveWidget
+from tools.export_xls import write_order_xls
 
 
 class OrderViewWidget(FWidget):

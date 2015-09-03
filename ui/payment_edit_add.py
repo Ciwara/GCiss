@@ -29,15 +29,21 @@ except:
 class EditOrAddPaymentrDialog(QDialog, FWidget):
 
     def __init__(self, table_p, parent, type_=None, payment=None, *args, **kwargs):
-        FWidget.__init__(self, parent, *args, **kwargs)
+        QDialog.__init__(self, parent, *args, **kwargs)
 
-        self.table_p = table_p
         self.type_ = type_
-        print("EEEEEEEEEEE", self.type_)
         self.payment = payment
         self.parent = parent
+        self.table_p = table_p
+
+        amount = ""
         if self.payment:
             self.new = False
+            print("payment", self.payment)
+            self.payment_date_field = FormatDate(payment.date)
+            self.type_ = payment.type_
+            self.payment_date_field = FormatDate(self.payment.date)
+            self.payment_date_field.setEnabled(False)
             self.title = u"Modification de {} {}".format(self.payment.type_,
                                                          self.payment.libelle)
             self.succes_msg = u"{} a été bien mise à jour".format(
@@ -49,21 +55,20 @@ class EditOrAddPaymentrDialog(QDialog, FWidget):
                 amount = payment.debit
         else:
             self.new = True
+            self.payment_date_field = FormatDate(QDate.currentDate())
             self.succes_msg = u"Client a été bien enregistré"
             self.title = u"Création d'un nouvel client"
             self.payment = Payment()
-            amount = ""
         self.setWindowTitle(self.title)
+
+        self.amount_field = IntLineEdit(unicode(amount))
+        self.libelle_field = QTextEdit(self.payment.libelle)
 
         vbox = QVBoxLayout()
 
-        self.payment_date_field = FormatDate(QDate.currentDate())
-        self.amount_field = IntLineEdit(amount)
-        self.libelle_field = QTextEdit(self.payment.libelle)
-
         formbox = QFormLayout()
         formbox.addRow(FormLabel(u"date: *"), self.payment_date_field)
-        formbox.addRow(FormLabel(u"Libelle : *"), self.libelle_field)
+        formbox.addRow(FormLabel(u"Libelle :"), self.libelle_field)
         formbox.addRow(FormLabel(u"Montant: *"), self.amount_field)
 
         butt = Button_save(u"Enregistrer")
@@ -85,8 +90,10 @@ class EditOrAddPaymentrDialog(QDialog, FWidget):
 
         payment = self.payment
         payment.type_ = self.type_
-        payment.date = date_to_datetime(payment_date)
         payment.libelle = libelle
+        if self.new:
+            print(date_to_datetime(payment_date))
+            payment.date = date_to_datetime(payment_date)
         if self.type_ == Payment.CREDIT:
             payment.credit = amount
         elif self.type_ == Payment.DEBIT:
@@ -95,7 +102,7 @@ class EditOrAddPaymentrDialog(QDialog, FWidget):
             payment.save()
             self.close()
             self.parent.Notify(u"le {type} {lib} à été enregistré avec succès".format(
-                type=payment.type_, lib=payment.libelle), "success")
-            self.table_p.refresh()
+                type=self.type_, lib=libelle), "success")
+            self.table_p.refresh_()
         except Exception as e:
             self.parent.Notify(e, "error")
