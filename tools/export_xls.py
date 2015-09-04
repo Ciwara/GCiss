@@ -153,87 +153,87 @@ def write_product_xls(file_name, data):
     return file_name
 
 
-def write_xls(file_name):
-    ''' Export data '''
-    # Principe
-    # write((nbre ligne - 1), nbre colonne, "contenu", style(optionnel).
-    # write_merge((nbre ligne - 1), (nbre ligne - 1) + nbre de ligne
-    # à merger, (nbre de colonne - 1), (nbre de colonne - 1) + nbre
-    # de colonne à merger, u"contenu", style(optionnel)).
-    book = xlwt.Workbook(encoding='ascii')
-    sheet = book.add_sheet(u"Rapports")
-    rowx = 0
-    sheet.write_merge(rowx, rowx + 1, 0, 3,
-                      u"Rapports de gestion de stock %s" % Config.APP_NAME, style_title)
-    rowx += 3
-    sheet.write_merge(rowx, rowx, 1, 2, u"Date du rapport: ", style)
-    date_com = "Bko le %s" % date.today().strftime("%d/%m/%Y")
-    sheet.write_merge(rowx, rowx, 3, 3, date_com)
+# def write_xls(file_name):
+#     ''' Export data '''
+# Principe
+# write((nbre ligne - 1), nbre colonne, "contenu", style(optionnel).
+# write_merge((nbre ligne - 1), (nbre ligne - 1) + nbre de ligne
+# à merger, (nbre de colonne - 1), (nbre de colonne - 1) + nbre
+# de colonne à merger, u"contenu", style(optionnel)).
+#     book = xlwt.Workbook(encoding='ascii')
+#     sheet = book.add_sheet(u"Rapports")
+#     rowx = 0
+#     sheet.write_merge(rowx, rowx + 1, 0, 3,
+#                       u"Rapports de gestion de stock %s" % Config.APP_NAME, style_title)
+#     rowx += 3
+#     sheet.write_merge(rowx, rowx, 1, 2, u"Date du rapport: ", style)
+#     date_com = "Bko le %s" % date.today().strftime("%d/%m/%Y")
+#     sheet.write_merge(rowx, rowx, 3, 3, date_com)
 
-    sheet.col(1).width = 0x0d00 * 3
-    sheet.col(2).width = 0x0d00 * 1.5
-    sheet.col(4).width = 0x0d00 * 2
-    # title = [u"Type", u"Produit", u"Nbre Carton", u"Restant", u"Date"]
+#     sheet.col(1).width = 0x0d00 * 3
+#     sheet.col(2).width = 0x0d00 * 1.5
+#     sheet.col(4).width = 0x0d00 * 2
+# title = [u"Type", u"Produit", u"Nbre Carton", u"Restant", u"Date"]
 
-    for rap in Report.all():
-        if int(rowx) % 2 == 0:
-            style_row_table = style1
-        else:
-            style_row_table = style2
-        sheet.write(rowx, 0, rap.type_, style_row_table)
-        sheet.write(rowx, 1, "%s (%s)" % (rap.product.name,
-                                          rap.product.code), style_row_table)
-        sheet.write(rowx, 2, rap.nbr_carton, style_row_table)
-        sheet.write(rowx, 3, rap.remaining, style_row_table)
-        sheet.write(
-            rowx, 4, rap.date.strftime(u'%x %Hh:%Mmn'), style_row_table)
-        rowx += 1
-    book.save(file_name)
-    return file_name
+#     for rap in Report.all():
+#         if int(rowx) % 2 == 0:
+#             style_row_table = style1
+#         else:
+#             style_row_table = style2
+#         sheet.write(rowx, 0, rap.type_, style_row_table)
+#         sheet.write(rowx, 1, "%s (%s)" % (rap.product.name,
+#                                           rap.product.code), style_row_table)
+#         sheet.write(rowx, 2, rap.nbr_carton, style_row_table)
+#         sheet.write(rowx, 3, rap.remaining, style_row_table)
+#         sheet.write(
+#             rowx, 4, rap.date.strftime(u'%x %Hh:%Mmn'), style_row_table)
+#         rowx += 1
+#     book.save(file_name)
+#     return file_name
 
 
-def write_inventory_xls(file_name, report):
-    period, report = report
-    book = xlwt.Workbook(encoding='ascii')
-    sheet = book.add_sheet(u"Inventaire %s" % Config.NAME_ORGA)
-    sheet.col(0).width = 0x0d00 * 3
-    sheet.protect = True
-    sheet.wnd_protect = True
-    sheet.obj_protect = True
-    sheet.scen_protect = True
-    sheet.password = "True"
-    rowx = 0
-    sheet.write_merge(rowx, rowx + 1, 0, 3,
-                      u"Inventaire de %s" % Config.NAME_ORGA, style_title)
+# def write_inventory_xls(file_name, report):
+#     period, report = report
+#     book = xlwt.Workbook(encoding='ascii')
+#     sheet = book.add_sheet(u"Inventaire %s" % Config.NAME_ORGA)
+#     sheet.col(0).width = 0x0d00 * 3
+#     sheet.protect = True
+#     sheet.wnd_protect = True
+#     sheet.obj_protect = True
+#     sheet.scen_protect = True
+#     sheet.password = "True"
+#     rowx = 0
+#     sheet.write_merge(rowx, rowx + 1, 0, 3,
+#                       u"Inventaire de %s" % Config.NAME_ORGA, style_title)
 
-    rowx += 3
-    sheet.write_merge(rowx, rowx, 1, 3, u"Du %s au %s" %
-                      (period[0].strftime("%d/ %m/ %Y"), period[1].strftime("%d/ %m/ %Y")))
+#     rowx += 3
+#     sheet.write_merge(rowx, rowx, 1, 3, u"Du %s au %s" %
+#                       (period[0].strftime("%d/ %m/ %Y"), period[1].strftime("%d/ %m/ %Y")))
 
-    title = [u"Désignation", u"Quantité", u"Prix U.", u"Montant"]
+#     title = [u"Désignation", u"Quantité", u"Prix U.", u"Montant"]
 
-    rowx += 2
-    for colx, val_center in enumerate(title):
-        sheet.write(rowx, colx, val_center, style_t_table)
-    rowx += 1
-    totaux = 0
-    for prod in report:
-        col = 0
-        totaux += prod[3]
-        for val_center in prod:
-            if isinstance(val_center, unicode):
-                style_ = style
-            else:
-                style_ = int_style
-            sheet.write_merge(rowx, rowx, col, col, val_center, style_)
-            col += 1
-        rowx += 1
+#     rowx += 2
+#     for colx, val_center in enumerate(title):
+#         sheet.write(rowx, colx, val_center, style_t_table)
+#     rowx += 1
+#     totaux = 0
+#     for prod in report:
+#         col = 0
+#         totaux += prod[3]
+#         for val_center in prod:
+#             if isinstance(val_center, unicode):
+#                 style_ = style
+#             else:
+#                 style_ = int_style
+#             sheet.write_merge(rowx, rowx, col, col, val_center, style_)
+#             col += 1
+#         rowx += 1
 
-    sheet.write_merge(rowx, rowx, 2, 2, "Totaux", style_)
-    sheet.write_merge(rowx, rowx, 3, 3, totaux, style_)
-    book.save(file_name)
-    openFile(file_name)
-    # return file_name
+#     sheet.write_merge(rowx, rowx, 2, 2, "Totaux", style_)
+#     sheet.write_merge(rowx, rowx, 3, 3, totaux, style_)
+#     book.save(file_name)
+#     openFile(file_name)
+# return file_name
 
 
 def write_order_xls(file_name, report):

@@ -6,19 +6,18 @@
 from __future__ import (
     unicode_literals, absolute_import, division, print_function)
 
-from datetime import datetime
+from datetime import datetime, date
 
 from PyQt4.QtGui import (QVBoxLayout, QGridLayout, QIcon, QMenu)
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QDate
 
 from configuration import Config
-from Common.ui.common import (
-    FWidget, FPeriodHolder, FPageTitle, Button, BttExportXLS)
+from Common.ui.common import (FormLabel, FWidget, FPeriodHolder, FPageTitle,
+                              Button, BttExportXLS, FormatDate)
 from Common.ui.table import FTableWidget, TotalsWidget
-from Common.ui.util import formatted_number, is_int, show_date
+from Common.ui.util import formatted_number, is_int, show_date, date_to_datetime
 from models import Invoice, Report, Payment
 from ui.payment_edit_add import EditOrAddPaymentrDialog
-from Common.exports_xls import export_dynamic_data
 
 
 try:
@@ -40,6 +39,13 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
         self.parent = parent
 
         self.title = u"Movements"
+
+        self.on_date = FormatDate(
+            QDate(date.today().year, date.today().month, 1))
+        self.end_date = FormatDate(QDate.currentDate())
+
+        self.button = Button(u"Ok")
+        self.button.clicked.connect(self.refresh)
         self.table = RapportTableWidget(parent=self)
 
         self.btt_export = BttExportXLS(u"Exporter")
@@ -54,10 +60,16 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
         self.sub_btt.clicked.connect(self.sub_payment)
 
         editbox = QGridLayout()
-        editbox.addWidget(self.add_btt, 0, 2)
-        editbox.addWidget(self.sub_btt, 0, 3)
-        editbox.addWidget(self.btt_export, 0, 6)
-        editbox.setColumnStretch(5, 5)
+        editbox.addWidget(FormLabel(u"Date debut"), 0, 1)
+        editbox.addWidget(self.on_date, 0, 2)
+        editbox.addWidget(FormLabel(u"Date fin"), 1, 1)
+        editbox.addWidget(self.end_date, 1, 2)
+        editbox.addWidget(self.button, 1, 3)
+
+        editbox.addWidget(self.add_btt, 1, 5)
+        editbox.addWidget(self.sub_btt, 1, 6)
+        editbox.addWidget(self.btt_export, 1, 7)
+        editbox.setColumnStretch(4, 2)
         vbox = QVBoxLayout()
         vbox.addWidget(FPageTitle(self.title))
         vbox.addLayout(editbox)
@@ -65,9 +77,12 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
         self.setLayout(vbox)
 
     def refresh(self):
-        self.table.refresh_()
+        self.l_date = [date_to_datetime(self.on_date.text()),
+                       date_to_datetime(self.end_date.text())]
+        self.table.refresh_(self.l_date)
 
     def export_xls(self):
+        from Common.exports_xls import export_dynamic_data
         dict_data = {
             'file_name': "versement.xls",
             'headers': self.table.hheaders[:-1],
@@ -75,14 +90,15 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
             "extend_rows": [(1, self.table.label_mov_tt),
                             (2, self.table.totals_debit),
                             (3, self.table.totals_credit), ],
-            "footers": [
-                (0, 2, 3, self.table.label_balance),
-                (0, 4, 4, self.table.balance_tt), ],
+            "footers": [(0, 2, 3, self.table.label_balance),
+                        (0, 4, 4, self.table.balance_tt), ],
             'sheet': self.title,
             'title': self.title,
             'widths': self.table.stretch_columns,
             'exclude_row': len(self.table.data) - 1,
-            # "date": self.table.date.strftime(u"%x")
+            "date": "Du {} au {}".format(
+                date_to_datetime(self.on_date.text()).strftime(u'%d/%m/%Y'),
+                date_to_datetime(self.end_date.text()).strftime(u'%d/%m/%Y'))
         }
         export_dynamic_data(dict_data)
 
@@ -116,20 +132,23 @@ class RapportTableWidget(FTableWidget):
         self.align_map = {0: 'l', 1: 'l', 2: 'r', 3: 'r', 4: 'r'}
         self.ecart = -5
         self.display_vheaders = False
-        self.set_data_for()
-        self.refresh()
         self.hideColumn(len(self.hheaders) - 1)
+        self.l_date = [date_to_datetime(self.parent.on_date.text()),
+                       date_to_datetime(self.parent.end_date.text())]
+        self.refresh_(self.l_date)
 
-    def refresh_(self):
+    def refresh_(self, l_date):
         """ """
         self._reset()
-        self.set_data_for()
+        self.set_data_for(l_date)
         self.refresh()
 
-    def set_data_for(self):
+    def set_data_for(self, *args):
 
+        date_ = args[0]
         self.data = [(show_date(pay.date), pay.libelle, pay.debit, pay.credit,
-                      pay.balance, pay.id) for pay in Payment.select().order_by(Payment.date.asc())]
+                      pay.balance, pay.id) for pay in Payment.filter(Payment.date > date_[
+                          0], Payment.date < date_[1]).order_by(Payment.date.asc())]
 
     def popup(self, pos):
 

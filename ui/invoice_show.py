@@ -18,8 +18,6 @@ from Common.ui.util import formatted_number, is_int, uopen_file
 from Common.ui.common import FWidget, FPageTitle, FLabel, LineEdit, Deleted_btt
 from Common.ui.table import FTableWidget, TotalsWidget
 
-from Common.exports_xls import export_dynamic_data
-
 
 class ShowInvoiceViewWidget(FWidget):
 
@@ -68,6 +66,7 @@ class ShowInvoiceViewWidget(FWidget):
 
     def export_xls(self):
 
+        from Common.exports_xls import export_dynamic_data
         from Common.cel import cel
         table = self.table_show
         hheaders = table.hheaders[:-1]
