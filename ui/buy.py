@@ -63,7 +63,7 @@ class BuyViewWidget(FWidget):
         self.table_resultat = ResultatTableWidget(parent=self)
         self.table_info = InfoTableWidget(parent=self)
 
-        editbox.addWidget(self.search_field, 0, 0)
+        # editbox.addWidget(self.search_field, 0, 0)
         editbox.addWidget(self.add_prod, 0, 1)
         editbox.addWidget(FormLabel(u"Date d'achat:"), 0, 4)
         editbox.addWidget(self.date, 0, 5)
@@ -74,6 +74,7 @@ class BuyViewWidget(FWidget):
         splitter_left = QSplitter(Qt.Vertical)
         splitter_down = QSplitter(Qt.Vertical)
         # splitter_left.addWidget(FBoxTitle(u"Les produits"))
+        splitter_left.addWidget(self.search_field)
         splitter_left.addWidget(self.table_resultat)
         splitter_down.resize(35, 20)
         splitter_down.addWidget(self.table_info)
@@ -202,9 +203,7 @@ class BuyTableWidget(FTableWidget):
         self.setRowCount(nb_rows + 1)
         self.setSpan(nb_rows, 0, 1, 2)
         self.setItem(nb_rows, 3, TotalsWidget(u"Montant"))
-        monttc = TotalsWidget(formatted_number(u"%d" % 0))
-        monttc.setTextAlignment(Qt.AlignRight)
-        self.setItem(nb_rows, 6, monttc)
+        self.setItem(nb_rows, 6, TotalsWidget(formatted_number(u"%d" % 0)))
 
         nb_rows += 1
         self.setRowCount(nb_rows + 1)
@@ -224,7 +223,6 @@ class BuyTableWidget(FTableWidget):
         if column == 1 or column == 2 or column == 3:
             self.line_edit = IntLineEdit(u"%s" % data)
             self.line_edit.textChanged.connect(self.changed_value)
-            self.line_edit.setAlignment(Qt.AlignRight)
             return self.line_edit
         return super(BuyTableWidget, self)._item_for_data(row, column, data,
                                                           context)
@@ -279,24 +277,14 @@ class BuyTableWidget(FTableWidget):
             b_f_u = b_f / qtsaisi
 
             b_f_tt += b_f
-            v_amount_item = TotalsWidget(formatted_number(v_amount))
-            v_amount_item.setTextAlignment(Qt.AlignRight | Qt.AlignCenter)
-            b_f_u_item = TotalsWidget(formatted_number(b_f_u))
-            b_f_u_item.setTextAlignment(Qt.AlignRight | Qt.AlignCenter)
-            b_f_item = TotalsWidget(formatted_number(b_f))
-            b_f_item.setTextAlignment(Qt.AlignRight | Qt.AlignCenter)
             v_amount_tt += v_amount
             # montt.setTextAlignment(Qt.AlignRight)
-            self.setItem(row_num, 4, v_amount_item)
-            self.setItem(row_num, 5, b_f_u_item)
-            self.setItem(row_num, 6, b_f_item)
+            self.setItem(row_num, 4, TotalsWidget(formatted_number(v_amount)))
+            self.setItem(row_num, 5, TotalsWidget(formatted_number(b_f_u)))
+            self.setItem(row_num, 6, TotalsWidget(formatted_number(b_f)))
             # Mise à jour
             self._update_data(
                 row_num, [qtsaisi, cost_buying, selling_price, v_amount, b_f_u, b_f])
-        v_amount_tt_item = TotalsWidget(formatted_number(v_amount_tt))
-        v_amount_tt_item.setTextAlignment(Qt.AlignRight | Qt.AlignCenter)
-        b_f_tt_item = TotalsWidget(formatted_number(b_f_tt))
-        b_f_tt_item.setTextAlignment(Qt.AlignRight | Qt.AlignCenter)
         row_num += 1
-        self.setItem(row_num, 4, v_amount_tt_item)
-        self.setItem(row_num, 6, b_f_tt_item)
+        self.setItem(row_num, 4, TotalsWidget(formatted_number(v_amount_tt)))
+        self.setItem(row_num, 6, TotalsWidget(formatted_number(b_f_tt)))

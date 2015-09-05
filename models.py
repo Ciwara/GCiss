@@ -279,8 +279,19 @@ class Invoice(BaseModel):
     paid_amount = IntegerField(verbose_name="Reste à payer")
 
     def __str__(self):
-        return "{num}/{client}/{owner}".format(num=self.number, owner=self.owner,
-                                               client=self.client)
+        return "{num}/{client}/{owner}".format(num=self.number,
+                                               owner=self.owner, client=self.client)
+
+    def __unicode__(self):
+        return self.__str__()
+
+    # def save(self):
+    #     print("invoice save")
+    #     if int(self.paid_amount) != 0:
+    #         Refund(owner=self.owner, amount=self.paid_amount,
+    #                invoice=self, provider_client=self.client).save()
+
+    #     super(Invoice, self).save()
 
     @property
     def get_next_number(self):
@@ -449,48 +460,73 @@ class Refund(BaseModel):
         order_by = ('date',)
 
     """docstring for ClassName"""
+    DT = "D"
+    RB = "R"
 
     owner = ForeignKeyField(Owner, verbose_name=("Utilisateur"))
     provider_client = ForeignKeyField(ProviderOrClient)
     date = DateTimeField(default=now)
+    invoice = ForeignKeyField(Invoice, null=True)
     amount = IntegerField(verbose_name="Montant")
     remaining = IntegerField(verbose_name="Reste à payer")
-
-    def save(self):
-        """Calcul du remboursement après une operation."""
-        # print("SAVE BEGIN")
-        previous_remaining = int(last_remaining())
-        amount = int(self.amount)
-        if self.type_ == self.CREDIT:
-            self.remaining = previous_remaining + amount
-        if self.type_ == self.DEBIT:
-            self.remaining = previous_remaining - amount
-            if self.remaining < 0:
-                raise_error(u"Erreur",
-                            u"On peut pas utilisé %d puis qu'il ne reste que %d"
-                            % (self.amount, previous_remaining))
-                return False
-
-        super(Refund, self).save()
-        try:
-            next_rpt = Refund.select().where(Refund.date > self.date,
-                                             Refund.deleted == False).order_by(Refund.date.asc()).get()
-            next_rpt.save()
-        except Exception as e:
-            # print("next_rpt", e)
-            pass
-
-    def last_remaining(self):
-        try:
-            return Refund.select().where(Refund.deleted == False).order_by(Refund.date.desc()).get().balance
-        except Exception as e:
-            print("last_remaining", e)
-            return 0
+    type_ = CharField(verbose_name="Type d'opération")
+    # "fin de payement"
+    status = BooleanField(default=False)
+    deleted = BooleanField(default=False)
 
     def __str__(self):
         return "{owner}{amount}{date}".format(
             owner=self.owner, date=self.date, amount=self.amount)
 
     def __unicode__(self):
-        return "{owner}{amount}{date}".format(
-            owner=self.owner, date=self.date, amount=self.amount)
+        return self.__str__()
+
+    def save(self):
+        """
+        Calcul du remaining en stock après une operation."""
+        self.owner = Owner.get(Owner.islog == True)
+        print("SAVE BEGIN")
+        previous_remaining = int(
+            self.last_remaining().remaining if self.last_remaining() else 0)
+        if self.type_ == self.RB:
+            self.remaining = previous_remaining - int(self.amount)
+        if self.type_ == self.DT:
+            self.remaining = previous_remaining + int(self.amount)
+
+        super(Refund, self).save()
+
+        if self.next_rpt():
+            self.next_rpt().save()
+
+    def next_rpt(self):
+        try:
+            return self.next_rpts().get()
+        except:
+            return None
+
+    def next_rpts(self):
+        try:
+            return Refund.select().where(Refund.date > self.date,
+                                         Refund.deleted == False).order_by(Refund.date.asc())
+        except Exception as e:
+            return None
+            print("next_rpt", e)
+
+    def deletes_data(self):
+        last = self.last_remaining()
+        next_ = self.next_rpt()
+        self.delete_instance()
+        if last:
+            last.save()
+        else:
+            if next_:
+                next_.save()
+        return
+
+    def last_remaining(self):
+        try:
+            return Refund.select().where(
+                Refund.deleted == False, Refund.date < self.date).order_by(Refund.date.desc()).get()
+        except Exception as e:
+            print("last_balance_payment", e)
+            return None

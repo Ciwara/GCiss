@@ -15,8 +15,6 @@ from Common.ui.util import show_date
 from models import Invoice, Buy
 from configuration import Config
 
-from ui.invoice_show import ShowInvoiceViewWidget
-
 
 class DashbordViewWidget(FWidget):
 
@@ -106,7 +104,6 @@ class InvoiceTableWidget(FTableWidget):
             except Exception as e:
                 print(e)
             invoices = invoices.where(qs).execute()
-            print(invoices)
         try:
             self.data = [(invoice.number, show_date(invoice.date),
                           invoice.client, "") for invoice in invoices]
@@ -126,6 +123,8 @@ class InvoiceTableWidget(FTableWidget):
         last_column = self.hheaders.__len__() - 1
         if column != last_column:
             return
+
+        from ui.invoice_show import ShowInvoiceViewWidget
         try:
             self.parent.change_main_context(ShowInvoiceViewWidget,
                                             invoice_num=self.data[row][0])
@@ -154,7 +153,6 @@ class BuyTableWidget(FTableWidget):
     def set_data_for(self):
         self.data = [(buy.id, show_date(buy.date), "")
                      for buy in Buy.select()]
-        print(self.data)
 
     def _item_for_data(self, row, column, data, context=None):
         if column == self.data[0].__len__() - 1:

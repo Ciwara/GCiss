@@ -132,7 +132,6 @@ class RapportTableWidget(FTableWidget):
         self.align_map = {0: 'l', 1: 'l', 2: 'r', 3: 'r', 4: 'r'}
         self.ecart = -5
         self.display_vheaders = False
-        self.hideColumn(len(self.hheaders) - 1)
         self.l_date = [date_to_datetime(self.parent.on_date.text()),
                        date_to_datetime(self.parent.end_date.text())]
         self.refresh_(self.l_date)
@@ -142,6 +141,7 @@ class RapportTableWidget(FTableWidget):
         self._reset()
         self.set_data_for(l_date)
         self.refresh()
+        self.hideColumn(len(self.hheaders) - 1)
 
     def set_data_for(self, *args):
 

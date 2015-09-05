@@ -21,7 +21,7 @@ from Common.peewee import fn
 from GCommon.ui._product_detail import InfoTableWidget
 from ui.invoice_show import ShowInvoiceViewWidget
 from configuration import Config
-from models import (Product, Invoice, Owner, Report, ProviderOrClient)
+from models import (Product, Invoice, Owner, Report, ProviderOrClient, Refund)
 
 try:
     unicode
@@ -38,10 +38,13 @@ class InvoiceViewWidget(FWidget):
         self.parent = parent
 
         vbox = QVBoxLayout(self)
-        hbox = QHBoxLayout(self)
-        editbox = QGridLayout()
-        next_number = int(
-            Invoice.select().order_by(Invoice.number.desc()).get().number) + 1
+        # hbox = QHBoxLayout(self)
+        editbox = QGridLayout(self)
+        try:
+            next_number = int(
+                Invoice.select().order_by(Invoice.number.desc()).get().number) + 1
+        except:
+            next_number = 1
         self.num_invoice = IntLineEdit(str(next_number))
         self.num_invoice.setToolTip(u"Le numéro")
         self.num_invoice.setMaximumSize(
@@ -85,24 +88,25 @@ class InvoiceViewWidget(FWidget):
         self.table_resultat = ResultatTableWidget(parent=self)
         self.table_info = InfoTableWidget(parent=self)
         self.table_resultat.refresh_("")
-        editbox.addWidget(self.search_field, 1, 0)
         editbox.addWidget(self.box_type_inv, 0, 2)
         editbox.addWidget(self.num_invoice, 0, 3)
         editbox.addWidget(FLabel(u"Doit :"), 1, 2)
         editbox.addWidget(self.name_client_field, 1, 3)
         # editbox.addWidget(self.add_clt_btt, 1, 4)
         editbox.addWidget(self.invoice_date, 0, 6)
-        editbox.setColumnStretch(5, 2)
+        editbox.setColumnStretch(0, 1)
+        editbox.setColumnStretch(5, 1)
         splitter = QSplitter(Qt.Horizontal)
 
         splitter_left = QSplitter(Qt.Vertical)
-        splitter_left.addWidget(FBoxTitle(u"Les resultats"))
+        splitter_left.addWidget(self.search_field)
         splitter_left.addWidget(self.table_resultat)
         # splitter_down.resize(15, 20)
         splitter_down = QSplitter(Qt.Vertical)
         splitter_down.addWidget(self.table_info)
         splitter_rigth = QSplitter(Qt.Vertical)
-        splitter_rigth.addWidget(FBoxTitle(u"Les produits vendus"))
+
+        # splitter_rigth.setLayout(editbox)
         splitter_rigth.addWidget(self.table_invoice)
         splitter_rigth.resize(800, 900)
 
@@ -110,9 +114,8 @@ class InvoiceViewWidget(FWidget):
         splitter.addWidget(splitter_left)
         splitter.addWidget(splitter_rigth)
 
-        hbox.addWidget(splitter)
         vbox.addLayout(editbox)
-        vbox.addLayout(hbox)
+        vbox.addWidget(splitter)
         self.setLayout(vbox)
 
     def add_clt(self):
@@ -145,28 +148,33 @@ class InvoiceViewWidget(FWidget):
         if not self.is_valide():
             return
         invoice_date = unicode(self.invoice_date.text())
-
         num_invoice = int(self.num_invoice.text())
+        invoice_type = self.liste_type_invoice[
+            self.box_type_inv.currentIndex()]
         lis_error = []
         invoice = Invoice()
         try:
-            invoice.owner = Owner.get(Owner.islog == True)
+            self.owner = Owner.get(Owner.islog == True)
         except:
             lis_error.append("Aucun utilisateur est connecté <br/>")
-
+        paid_amount = self.table_invoice.paid_amount_field.text()
         clt = ProviderOrClient.get_or_create(
             self.name_client, int(self.phone.replace(" ", "")), ProviderOrClient.CLT)
         invoice.number = num_invoice
+        invoice.owner = self.owner
         invoice.client = clt
         invoice.location = "Bamako"
-        invoice.type_ = self.liste_type_invoice[
-            self.box_type_inv.currentIndex()]
+        invoice.type_ = invoice_type
         invoice.subject = ""
-        invoice.paid_amount = 0
+        invoice.paid_amount = paid_amount
         invoice.tax = False
         try:
             invoice.save()
+            if paid_amount != 0 or invoice_type == Invoice.TYPE_BON:
+                Refund(type_=Refund.DT, owner=self.owner, amount=paid_amount,
+                       invoice=Invoice.get(number=num_invoice), provider_client=clt).save()
         except Exception as e:
+            invoice.deletes_data()
             print(e)
             lis_error.append(
                 "Erreur sur l'enregistrement d'entête de facture<br/>")
@@ -250,8 +258,7 @@ class InvoiceTableWidget(FTableWidget):
 
         self.parent = parent
         self.pparent = parent.parent
-        self.hheaders = [u"Modeles", u"Quantité", u"Prix Unitaire",
-                         u"Montant"]
+        self.hheaders = [u"Modeles", u"Quantité", u"Prix Unitaire", u"Montant"]
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.popup)
@@ -292,22 +299,28 @@ class InvoiceTableWidget(FTableWidget):
 
     def extend_rows(self):
         nb_rows = self.rowCount()
-        self.setRowCount(nb_rows + 1)
-        # self.setSpan(nb_rows, 0, 1, 2)
+        self.setRowCount(nb_rows + 3)
+        self.setSpan(nb_rows, 0, 1, 2)
+        self.setSpan(nb_rows + 1, 0, 1, 2)
+        self.setSpan(nb_rows + 2, 0, 1, 2)
         self.setItem(nb_rows, 2, TotalsWidget(u"Montant"))
         monttc = TotalsWidget(formatted_number(u"%d" % 0))
-        monttc.setTextAlignment(Qt.AlignRight)
         self.setItem(nb_rows, 3, monttc)
-
         nb_rows += 1
-        self.setRowCount(nb_rows + 1)
-        # self.setSpan(nb_rows, 0, 1, 3)
         bicon = QIcon.fromTheme(
             '', QIcon(u"{}save.png".format(Config.img_media)))
         self.button = QPushButton(bicon, u"Enregistrer")
         self.button.released.connect(self.parent.save_b)
         self.button.setEnabled(False)
-        self.setCellWidget(nb_rows, 3, self.button)
+        self.setItem(nb_rows, 2, TotalsWidget(u"Reste à payer"))
+        self.paid_amount_field = IntLineEdit()
+        self.setCellWidget(nb_rows, 3, self.paid_amount_field)
+        self.setCellWidget(nb_rows + 1, 3, self.button)
+
+        pw = self.parent.parent.page_width() / 7
+        self.setColumnWidth(0, pw * 2)
+        self.setColumnWidth(1, pw)
+        self.setColumnWidth(2, pw)
 
     def _update_data(self, row_num, new_data):
         self.data[row_num] = (self.data[row_num][0], new_data[0], new_data[1],
@@ -326,7 +339,7 @@ class InvoiceTableWidget(FTableWidget):
         """ Recupère les elements du tableau """
 
         list_invoice = []
-        for i in range(self.rowCount() - 2):
+        for i in range(self.rowCount() - 3):
             liste_item = []
             row_data = self.data[i]
             try:
@@ -342,7 +355,7 @@ class InvoiceTableWidget(FTableWidget):
 
     def changed_value(self, refresh=False):
         """ Calcule les Resultat """
-        mtt_ht = 0
+        self.mtt_ht = 0
         # self.button.setEnabled(False)
         for row_num in xrange(0, self.data.__len__()):
             product = unicode(self.item(row_num, 0).text())
@@ -372,11 +385,14 @@ class InvoiceTableWidget(FTableWidget):
                            u"<b>{}</b> est inférieure au prix minimum de vente<b> {} CFA</b>".format(pusaisi, selling_price), pusaisi <= selling_price):
                 return
 
-            ui_item = (qtsaisi * pusaisi)
-            mtt_ht += ui_item
-            montt = TotalsWidget(formatted_number(ui_item))
-            self.setItem(row_num, 3, montt)
-            self._update_data(row_num, [qtsaisi, pusaisi, mtt_ht])
-        monttc = TotalsWidget(formatted_number(mtt_ht))
-        self.setItem(row_num + 1, 3, monttc)
+            montant = (qtsaisi * pusaisi)
+            self.mtt_ht += montant
+            self.setItem(row_num, 3, TotalsWidget(formatted_number(montant)))
+            self._update_data(row_num, [qtsaisi, pusaisi, self.mtt_ht])
+        self.setItem(
+            row_num + 1, 3, TotalsWidget(formatted_number(self.mtt_ht)))
+        typ = self.parent.liste_type_invoice[
+            self.parent.box_type_inv.currentIndex()]
+        self.paid_amount_field.setText(
+            str(self.mtt_ht) if typ == Invoice.TYPE_BON else "0")
         self.button.setEnabled(True)
