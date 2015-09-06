@@ -62,8 +62,6 @@ class InvoiceViewWidget(FWidget):
 
         self.name_client_field.setMaximumSize(
             200, self.name_client_field.maximumSize().height())
-        self.name_client_field.setMinimumSize(
-            200, self.name_client_field.maximumSize().height())
         self.name_client_field.setToolTip("Nom, numero du client")
 
         self.add_clt_btt = BttSmall(u"+")
@@ -82,7 +80,7 @@ class InvoiceViewWidget(FWidget):
         self.search_field = LineEdit()
         self.search_field.setPlaceholderText("Rechercher un article")
         self.search_field.textChanged.connect(self.finder)
-        self.search_field.setFixedWidth(250)
+        # self.search_field.setFixedWidth(250)
 
         self.table_invoice = InvoiceTableWidget(parent=self)
         self.table_resultat = ResultatTableWidget(parent=self)

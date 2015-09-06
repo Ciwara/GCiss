@@ -34,8 +34,6 @@ class DebtsViewWidget(FWidget):
 
         self.table_debt = DebtsTableWidget(parent=self)
         self.table_provid_clt = ProviderOrClientTableWidget(parent=self)
-        # self.table_refund = RefundTableWidget(parent=self)
-        # self.operation = OperationWidget(parent=self)
 
         self.search_field = LineEdit()
         self.search_field.textChanged.connect(self.search)
@@ -47,22 +45,9 @@ class DebtsViewWidget(FWidget):
         self.splitter_left.addWidget(self.search_field)
         self.splitter_left.addWidget(self.table_provid_clt)
 
-        splitter_details = QSplitter(Qt.Horizontal)
-
-        # splitter_down = QSplitter(Qt.Vertical)
-        # splitter_down.addWidget(self.operation)
-
-        # splitter_transf = QSplitter(Qt.Horizontal)
-        # splitter_transf.addWidget(self.table_refund)
-
         splt_clt = QSplitter(Qt.Vertical)
-        # splt_clt.addWidget(FBoxTitle(u"Les clients"))
         splt_clt.addWidget(self.table_debt)
         splt_clt.resize(900, 1000)
-
-        # self.splitter_left.addWidget(splitter_down)
-        # splitter_details.addWidget(splitter_transf)
-        splt_clt.addWidget(splitter_details)
         splitter.addWidget(self.splitter_left)
         splitter.addWidget(splt_clt)
 
@@ -73,59 +58,13 @@ class DebtsViewWidget(FWidget):
 
         search_term = self.search_field.text()
         print(search_term)
-        # self.search_field.setStyleSheet("")
-        # self.search_field.setText(u"")
-
         # self.table_debt.refresh_(search=search_term)
         # self.search_field.clear()
 
-    def new_refund(self):
+    def new_refund(self, provid_clt):
         from ui.refund_edit_add import RefundEditAddDialog
         self.parent.open_dialog(
-            RefundEditAddDialog, modal=True, table_p=self.table_debt)
-
-
-# class OperationWidget(FWidget):
-
-#     """docstring for OperationWidget"""
-
-#     def __init__(self, parent, *args, **kwargs):
-#         super(FWidget, self).__init__(parent=parent, *args, **kwargs)
-
-#         self.parent = parent
-
-#         self.search_field = LineEdit()
-#         self.search_field.textChanged.connect(self.search)
-#         self.search_field.setToolTip(u"Taper le nom ou le numéro de "
-#                                      u"téléphone à chercher")
-
-# btt_addprovid_clt = Button(u"Nouveau Reglement")
-# btt_addprovid_clt.setIcon(QIcon.fromTheme('document-new', QIcon('')))
-# btt_addprovid_clt.clicked.connect(self.new_refund)
-
-#         formbox = QFormLayout()
-
-# formbox.addWidget(self.search_field, 0, 0)
-# formbox.addWidget(btt_addprovid_clt, 1, 0)
-#         formbox.addRow("", self.search_field)
-# formbox.addRow("", btt_addprovid_clt)
-#         vbox = QVBoxLayout()
-#         vbox.addLayout(formbox)
-#         self.setLayout(vbox)
-
-#     def search(self):
-
-#         search_term = self.search_field.text()
-#         self.search_field.setStyleSheet("")
-#         self.search_field.setText(u"")
-
-#         self.parent.table_debt.refresh_(search=search_term)
-#         self.search_field.clear()
-
-#     def add_provid_clt(self):
-#         from provider_client_edit_add import EditOrAddClientOrProviderDialog
-#         self.parent.open_dialog(EditOrAddClientOrProviderDialog, modal=True,
-#                                 table_p=self.parent)
+            RefundEditAddDialog, modal=True, type_=Refund.RB, provid_clt=provid_clt, table_p=self.table_debt)
 
 
 class ProviderOrClientTableWidget(QListWidget):
@@ -140,21 +79,22 @@ class ProviderOrClientTableWidget(QListWidget):
         self.itemSelectionChanged.connect(self.handleClicked)
         self.refresh_()
 
-        # self.setContextMenuPolicy(Qt.CustomContextMenu)
-        # self.customContextMenuRequested.connect(self.popup)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.popup)
 
     def popup(self, pos):
         row = self.selectionModel().selection().indexes()[0].row()
         if row < 1:
             return
         menu = QMenu()
-        delaction = menu.addAction("modifier")
+        refund = menu.addAction("Reglement")
         action = menu.exec_(self.mapToGlobal(pos))
 
-        if action == delaction:
-            ProviderOrClient.get(ProviderOrClient.type_ == ProviderOrClient.CLT,
-                                 ProviderOrClient.name == self.item(row).text()).delete_instance()
-            self.refresh_()
+        if action == refund:
+            provid_clt = ProviderOrClient.get(
+                ProviderOrClient.phone == self.item(row).text().split(",")[1])
+            self.parent.new_refund(provid_clt)
+            # self.refresh_()
 
     def refresh_(self):
         """ Rafraichir la liste des provid_cltes"""
@@ -185,7 +125,8 @@ class ProviderOrClientQListWidgetItem(QListWidgetItem):
 
     def init_text(self):
         try:
-            self.setText(self.provid_clt.name)
+            self.setText(
+                "{}, {}".format(self.provid_clt.name, self.provid_clt.phone))
         except AttributeError:
             font = QFont()
             font.setBold(True)
@@ -255,7 +196,8 @@ class DebtsTableWidget(FTableWidget):
             nb_rows, 4, TotalsWidget(formatted_number(self.remaining)))
         self.btt_refund = QPushButton(u"Reglement")
         # self.btt_refund.released.connect(self.new_refund)
-        # self.setCellWidget(nb_rows, 2, self.btt_refund)
+        # self.setCellWidget(nb_rows + 1, 2, self.btt_refund)
+        # self.setItem(nb_rows, 2, TotalsWidget("KKKKKKK"))
 
     def new_refund(self):
         print("cool")

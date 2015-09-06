@@ -36,7 +36,6 @@ class EditOrAddPaymentrDialog(QDialog, FWidget):
         self.parent = parent
         self.table_p = table_p
 
-        amount = ""
         if self.payment:
             self.new = False
             self.type_ = payment.type_
@@ -53,6 +52,7 @@ class EditOrAddPaymentrDialog(QDialog, FWidget):
                 amount = payment.debit
         else:
             self.new = True
+            amount = ""
             self.payment_date_field = FormatDate(QDate.currentDate())
             self.succes_msg = u"Client a été bien enregistré"
             self.title = u"Création d'un nouvel client"
@@ -65,9 +65,9 @@ class EditOrAddPaymentrDialog(QDialog, FWidget):
         vbox = QVBoxLayout()
 
         formbox = QFormLayout()
-        formbox.addRow(FormLabel(u"date: *"), self.payment_date_field)
+        formbox.addRow(FormLabel(u"Date : *"), self.payment_date_field)
         formbox.addRow(FormLabel(u"Libelle :"), self.libelle_field)
-        formbox.addRow(FormLabel(u"Montant: *"), self.amount_field)
+        formbox.addRow(FormLabel(u"Montant : *"), self.amount_field)
 
         butt = Button_save(u"Enregistrer")
         butt.clicked.connect(self.save_edit)
@@ -78,19 +78,17 @@ class EditOrAddPaymentrDialog(QDialog, FWidget):
 
     def save_edit(self):
         ''' add operation '''
-        libelle = unicode(self.libelle_field.toPlainText())
-        amount = unicode(self.amount_field.text())
-        payment_date = unicode(self.payment_date_field.text())
-        # if check_is_empty(self.libelle_field):
-        #     return
         if check_is_empty(self.amount_field):
             return
+
+        payment_date = unicode(self.payment_date_field.text())
+        libelle = unicode(self.libelle_field.toPlainText())
+        amount = int(self.amount_field.text())
 
         payment = self.payment
         payment.type_ = self.type_
         payment.libelle = libelle
         if self.new:
-            print(date_to_datetime(payment_date))
             payment.date = date_to_datetime(payment_date)
         if self.type_ == Payment.CREDIT:
             payment.credit = amount

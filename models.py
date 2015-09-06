@@ -242,7 +242,10 @@ class ProviderOrClient(BaseModel):
                                      ProviderOrClient == self)
 
     def __str__(self):
-        return u"{}".format(self.name)
+        return u"{}, {}".format(self.name, self.phone)
+
+    def __unicode__(self):
+        return self.__str__()
 
     @classmethod
     def get_or_create(cls, name, phone, typ):
@@ -285,13 +288,9 @@ class Invoice(BaseModel):
     def __unicode__(self):
         return self.__str__()
 
-    # def save(self):
-    #     print("invoice save")
-    #     if int(self.paid_amount) != 0:
-    #         Refund(owner=self.owner, amount=self.paid_amount,
-    #                invoice=self, provider_client=self.client).save()
-
-    #     super(Invoice, self).save()
+    def save(self):
+        self.owner = Owner.get(Owner.islog == True)
+        super(Invoice, self).save()
 
     @property
     def get_next_number(self):
@@ -342,6 +341,10 @@ class Buy(BaseModel):
             return Report.select().where(Report.buy == self)
         except:
             pass
+
+    def save(self):
+        self.owner = Owner.get(Owner.islog == True)
+        super(Buy, self).save()
 
     @property
     def date(self):
@@ -481,6 +484,9 @@ class Refund(BaseModel):
     def __unicode__(self):
         return self.__str__()
 
+    def display_name(self):
+        return self.__str__()
+
     def save(self):
         """
         Calcul du remaining en stock après une operation."""
@@ -506,8 +512,10 @@ class Refund(BaseModel):
 
     def next_rpts(self):
         try:
-            return Refund.select().where(Refund.date > self.date,
-                                         Refund.deleted == False).order_by(Refund.date.asc())
+            return Refund.select().where(
+                Refund.date > self.date,
+                Refund.provider_client == self.provider_client,
+                Refund.deleted == False).order_by(Refund.date.asc())
         except Exception as e:
             return None
             print("next_rpt", e)
@@ -526,7 +534,9 @@ class Refund(BaseModel):
     def last_remaining(self):
         try:
             return Refund.select().where(
-                Refund.deleted == False, Refund.date < self.date).order_by(Refund.date.desc()).get()
+                Refund.deleted == False,
+                Refund.provider_client == self.provider_client,
+                Refund.date < self.date).order_by(Refund.date.desc()).get()
         except Exception as e:
             print("last_balance_payment", e)
             return None

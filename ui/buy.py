@@ -47,10 +47,8 @@ class BuyViewWidget(FWidget):
         self.name_client = LineEdit()
         self.search_field = LineEdit()
         self.search_field.setPlaceholderText("Rechercher un article")
-        # self.search_field.setMaximumSize(350,
-        # self.search_field.maximumSize().height())
         self.search_field.textChanged.connect(self.finder)
-        self.search_field.setFixedWidth(200)
+        # self.search_field.setFixedWidth(200)
 
         self.add_prod = Button(u"+ &Article")
         self.add_prod.clicked.connect(self.add_product)
@@ -63,7 +61,6 @@ class BuyViewWidget(FWidget):
         self.table_resultat = ResultatTableWidget(parent=self)
         self.table_info = InfoTableWidget(parent=self)
 
-        # editbox.addWidget(self.search_field, 0, 0)
         editbox.addWidget(self.add_prod, 0, 1)
         editbox.addWidget(FormLabel(u"Date d'achat:"), 0, 4)
         editbox.addWidget(self.date, 0, 5)
@@ -73,14 +70,12 @@ class BuyViewWidget(FWidget):
 
         splitter_left = QSplitter(Qt.Vertical)
         splitter_down = QSplitter(Qt.Vertical)
-        # splitter_left.addWidget(FBoxTitle(u"Les produits"))
         splitter_left.addWidget(self.search_field)
         splitter_left.addWidget(self.table_resultat)
         splitter_down.resize(35, 20)
         splitter_down.addWidget(self.table_info)
 
         splitter_rigth = QSplitter(Qt.Vertical)
-        # splitter_rigth.addWidget(FBoxTitle(u"Les produits achetés"))
         splitter_rigth.addWidget(self.table_buy)
         splitter_rigth.resize(800, 900)
 

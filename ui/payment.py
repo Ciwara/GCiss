@@ -66,8 +66,8 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
         editbox.addWidget(self.end_date, 1, 2)
         editbox.addWidget(self.button, 1, 3)
 
-        editbox.addWidget(self.add_btt, 1, 5)
-        editbox.addWidget(self.sub_btt, 1, 6)
+        editbox.addWidget(self.sub_btt, 1, 5)
+        editbox.addWidget(self.add_btt, 1, 6)
         editbox.addWidget(self.btt_export, 1, 7)
         editbox.setColumnStretch(4, 2)
         vbox = QVBoxLayout()
@@ -75,11 +75,6 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
         vbox.addLayout(editbox)
         vbox.addWidget(self.table)
         self.setLayout(vbox)
-
-    def refresh(self):
-        self.l_date = [date_to_datetime(self.on_date.text()),
-                       date_to_datetime(self.end_date.text())]
-        self.table.refresh_(self.l_date)
 
     def export_xls(self):
         from Common.exports_xls import export_dynamic_data
@@ -132,12 +127,13 @@ class RapportTableWidget(FTableWidget):
         self.align_map = {0: 'l', 1: 'l', 2: 'r', 3: 'r', 4: 'r'}
         self.ecart = -5
         self.display_vheaders = False
-        self.l_date = [date_to_datetime(self.parent.on_date.text()),
-                       date_to_datetime(self.parent.end_date.text())]
-        self.refresh_(self.l_date)
+        self.refresh_()
 
-    def refresh_(self, l_date):
+    def refresh_(self):
         """ """
+
+        l_date = [date_to_datetime(self.parent.on_date.text()),
+                  date_to_datetime(self.parent.end_date.text())]
         self._reset()
         self.set_data_for(l_date)
         self.refresh()
