@@ -34,7 +34,7 @@ class DashbordViewWidget(FWidget):
         table_buying = QVBoxLayout()
 
         self.search_field = LineEdit()
-        self.search_field.setToolTip("Rechercher un produit")
+        self.search_field.setPlaceholderText("Rechercher")
         self.search_field.setMaximumSize(
             500, self.search_field.maximumSize().height())
         self.search_field.textChanged.connect(self.finder)
@@ -48,7 +48,6 @@ class DashbordViewWidget(FWidget):
 
         self.title_invoice = FBoxTitle(u"Les Factures")
         self.table_invoice = InvoiceTableWidget(parent=self)
-        # table_invoice.addWidget(self.title_invoice)
         table_invoice.addWidget(self.search_field)
         table_invoice.addWidget(self.table_invoice)
 
@@ -95,7 +94,7 @@ class InvoiceTableWidget(FTableWidget):
         #     print("is value")
         invoices = Invoice.select().order_by(Invoice.number.desc())
         if value:
-
+            # return
             qs = (Invoice.location.contains(value) |
                   # Invoice.date.contains(value) |
                   Invoice.client.contains(value))
@@ -103,7 +102,8 @@ class InvoiceTableWidget(FTableWidget):
                 qs = qs | (Invoice.number.contains(int(value)))
             except Exception as e:
                 print(e)
-            invoices = invoices.where(qs).execute()
+            # invoices = invoices.where(qs).execute()
+            invoices = qs
         try:
             self.data = [(invoice.number, show_date(invoice.date),
                           invoice.client, "") for invoice in invoices]

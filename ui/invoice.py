@@ -155,9 +155,13 @@ class InvoiceViewWidget(FWidget):
             self.owner = Owner.get(Owner.islog == True)
         except:
             lis_error.append("Aucun utilisateur est connecté <br/>")
-        paid_amount = self.table_invoice.paid_amount_field.text()
-        clt = ProviderOrClient.get_or_create(
-            self.name_client, int(self.phone.replace(" ", "")), ProviderOrClient.CLT)
+        paid_amount = int(self.table_invoice.paid_amount_field.text())
+        try:
+            clt = ProviderOrClient.get_or_create(
+                self.name_client, int(self.phone.replace(" ", "")), ProviderOrClient.CLT)
+        except ValueError:
+            field_error(
+                self.name_client_field, "Nom, numéro de téléphone du client")
         invoice.number = num_invoice
         invoice.owner = self.owner
         invoice.client = clt
@@ -168,12 +172,11 @@ class InvoiceViewWidget(FWidget):
         invoice.tax = False
         try:
             invoice.save()
-            if paid_amount != 0 or invoice_type == Invoice.TYPE_BON:
+            if int(paid_amount) != 0 or invoice_type == Invoice.TYPE_BON:
                 Refund(type_=Refund.DT, owner=self.owner, amount=paid_amount,
                        invoice=Invoice.get(number=num_invoice), provider_client=clt).save()
         except Exception as e:
             invoice.deletes_data()
-            print(e)
             lis_error.append(
                 "Erreur sur l'enregistrement d'entête de facture<br/>")
             return False
@@ -196,7 +199,7 @@ class InvoiceViewWidget(FWidget):
                 lis_error.append(e)
         if lis_error != []:
             invoice.delete_instance()
-            self.Notify(lis_error, "error")
+            self.parent.Notify(lis_error, "error")
             return False
         else:
             self.parent.Notify("Facture Enregistrée avec succès", "success")
@@ -282,15 +285,15 @@ class InvoiceTableWidget(FTableWidget):
         self.refresh()
 
     def popup(self, pos):
-        if (len(self.data) - 1) < self.selectionModel().selection().indexes()[0].row():
+        row = self.selectionModel().selection().indexes()[0].row()
+        if (len(self.data) - 1) < row:
             return False
         menu = QMenu()
         quitAction = menu.addAction("Supprimer cette ligne")
         action = menu.exec_(self.mapToGlobal(pos))
         if action == quitAction:
             try:
-                self.data.pop(self.selectionModel()
-                                  .selection().indexes()[0].row())
+                self.data.pop(row)
             except IndexError:
                 pass
             self.refresh()
@@ -298,9 +301,6 @@ class InvoiceTableWidget(FTableWidget):
     def extend_rows(self):
         nb_rows = self.rowCount()
         self.setRowCount(nb_rows + 3)
-        self.setSpan(nb_rows, 0, 1, 2)
-        self.setSpan(nb_rows + 1, 0, 1, 2)
-        self.setSpan(nb_rows + 2, 0, 1, 2)
         self.setItem(nb_rows, 2, TotalsWidget(u"Montant"))
         monttc = TotalsWidget(formatted_number(u"%d" % 0))
         self.setItem(nb_rows, 3, monttc)
@@ -314,6 +314,7 @@ class InvoiceTableWidget(FTableWidget):
         self.paid_amount_field = IntLineEdit()
         self.setCellWidget(nb_rows, 3, self.paid_amount_field)
         self.setCellWidget(nb_rows + 1, 3, self.button)
+        self.setSpan(nb_rows - 1, 0, 3, 2)
 
         pw = self.parent.parent.page_width() / 7
         self.setColumnWidth(0, pw * 2)
@@ -356,10 +357,12 @@ class InvoiceTableWidget(FTableWidget):
         self.mtt_ht = 0
         # self.button.setEnabled(False)
         for row_num in xrange(0, self.data.__len__()):
-            product = unicode(self.item(row_num, 0).text())
-            last_report = Product.get(Product.name == product).last_report
+            product = Product.get(
+                Product.name == unicode(self.item(row_num, 0).text()))
+            last_report = product.last_report
+            last_price = product.last_price()
             qtremaining = last_report.remaining
-            selling_price = last_report.selling_price
+            selling_price = last_price
             invoice_date = unicode(self.parent.invoice_date.text())
 
             qtsaisi = is_int(self.cellWidget(row_num, 1).text())
@@ -377,11 +380,14 @@ class InvoiceTableWidget(FTableWidget):
             if (pusaisi and check_is_empty(self.cellWidget(row_num, 2))):
                 return
             if check_field(self.cellWidget(row_num, 1),
-                           u"<b>{}</b> est supérieur à la quantité restante (<b>{}</b>)".format(qtsaisi, qtremaining), qtremaining < qtsaisi):
+                           u"<b>{}</b> est supérieur à la quantité restante (<b>{}</b>)".format(
+                    qtsaisi, qtremaining), qtremaining < qtsaisi):
                 return
             if check_field(self.cellWidget(row_num, 2),
-                           u"<b>{}</b> est inférieure au prix minimum de vente<b> {} CFA</b>".format(pusaisi, selling_price), pusaisi <= selling_price):
-                return
+                           u"<b>{}</b> est inférieure au prix minimum de vente<b> {} CFA</b>".format(
+                    pusaisi, selling_price), pusaisi < selling_price):
+                print("E")
+                # return
 
             montant = (qtsaisi * pusaisi)
             self.mtt_ht += montant

@@ -14,7 +14,7 @@ from models import Invoice, Report
 from tools.export_pdf import pdf_view
 from tools.export_xls import write_invoice_xls
 
-from Common.ui.util import formatted_number, is_int, uopen_file
+from Common.ui.util import formatted_number, is_int, uopen_file, show_date
 from Common.ui.common import FWidget, FPageTitle, FLabel, LineEdit, Deleted_btt
 from Common.ui.table import FTableWidget, TotalsWidget
 
@@ -31,7 +31,7 @@ class ShowInvoiceViewWidget(FWidget):
         self.parent = parent
 
         vbox = QVBoxLayout()
-        self.title = u"Facture"
+        self.title = self.invoice.type_
 
         self.table_show = ShowOrderTableWidget(parent=self)
 
@@ -54,7 +54,7 @@ class ShowInvoiceViewWidget(FWidget):
         editbox.addWidget(FLabel(u"{typ} N°: {num}".format(
             num=self.invoice.number, typ=self.invoice.type_)), 0, 0)
         editbox.addWidget(FLabel(u"%s le %s" % (self.invoice.location,
-                                                self.invoice.date.strftime(u'%x'))), 1, 4)
+                                                show_date(self.invoice.date))), 1, 4)
         editbox.addWidget(FLabel(u"Doit: %s " % self.invoice.client), 1, 0)
         # editbox.addWidget(self.button_pdf, 1, 5)
         editbox.addWidget(self.button_dl, 0, 4)
@@ -117,8 +117,8 @@ class ShowOrderTableWidget(FTableWidget):
         self.hheaders = [_(u"Quantité"), _(u"Désignation"), _(u"Prix Unitaire"),
                          _(u"Montant"), ""]
 
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.popup)
+        # self.setContextMenuPolicy(Qt.CustomContextMenu)
+        # self.customContextMenuRequested.connect(self.popup)
 
         self.stretch_columns = [1, 3]
         self.align_map = {2: 'r', 3: 'r'}
@@ -152,7 +152,6 @@ class ShowOrderTableWidget(FTableWidget):
         from ui.ligne_edit import EditLigneViewWidget
         from ui.deleteview import DeleteViewWidget
         from data_helper import check_befor_update_data
-
         if (len(self.data) - 1) < self.selectionModel().selection().indexes()[0].row():
             return False
         menu = QMenu()
@@ -169,24 +168,34 @@ class ShowOrderTableWidget(FTableWidget):
                 pass
 
         if action == delaction:
-            if check_befor_update_data(report):
-                self.parent.open_dialog(DeleteViewWidget, modal=True,
-                                        table_p=self, report=report)
+            list_error = check_befor_update_data(report)
+            if list_error == []:
+                if len(self.data) < 2:
+                    self.parent.cancellation()
+                else:
+                    self.parent.open_dialog(
+                        DeleteViewWidget, modal=True, obj=report, table_p=self,)
             else:
                 from Common.ui.util import raise_error
-                raise_error(u"Erreur", u"Impossible de supprimer ce rapport car"
-                            u" le restant sera : <b>%s</b> qui est < 0" % remaining)
+                raise_error(u"Impossible de supprimer", """<h3>L'article {} :</h3>
+                        Aura <b>{}</b> comme dernier restant.""".format(
+                    report.product.name, list_error[-1]))
 
     def extend_rows(self):
 
         nb_rows = self.rowCount()
-        self.setRowCount(nb_rows + 1)
-        self.setSpan(nb_rows, 0, 2, 2)
-        self.setItem(nb_rows, 2, TotalsWidget(u"Totaux : "))
+        self.setRowCount(nb_rows + 2)
 
         self.montant_ht = 0
         for row_num in xrange(0, self.data.__len__()):
             self.montant_ht += (is_int(self.item(row_num, 0).text())
                                 * is_int(self.item(row_num, 2).text()))
+        row_num += 1
+        self.setItem(row_num, 2, TotalsWidget(u"Totaux : "))
         self.setItem(
-            row_num + 1, 3, TotalsWidget(formatted_number(self.montant_ht)))
+            row_num, 3, TotalsWidget(formatted_number(self.montant_ht)))
+        row_num += 1
+        self.setItem(row_num, 2, TotalsWidget(u"Montant payé : "))
+        self.setItem(row_num, 3, TotalsWidget(
+            formatted_number(self.montant_ht - self.parent.invoice.paid_amount)))
+        self.setSpan(nb_rows, 0, 2, 2)

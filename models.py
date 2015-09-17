@@ -117,6 +117,18 @@ class Product(BaseModel):
             # print(e)
             pass
 
+    def last_price(self):
+        try:
+            last_selling_price = Report.select().where(
+                Report.product == self,
+                Report.type_ == Report.E,
+                Report.deleted == False).order_by(Report.date.desc()).get().selling_price
+        except Exception as e:
+            print("last_price", e)
+            last_selling_price = 0
+
+        return last_selling_price
+
 
 class Payment(BaseModel):
 
@@ -228,18 +240,23 @@ class ProviderOrClient(BaseModel):
         FileJoin, null=True, related_name='file_joins_pictures', verbose_name=("image de la societe"))
 
     def invoices(self):
-        return Invoice.select().where(ProviderOrClient == self)
+        return Invoice.select().where(Invoice.client == self)
 
     def buys(self):
-        return Buy.select().where(ProviderOrClient == self)
+        return Buy.select().where(Buy.provd_or_clt == self)
 
     def invoices_items(self):
         return Report.select().where(Report.type_ == Report.S,
-                                     ProviderOrClient == self)
+                                     Report.invoice.client == self)
 
-    def buys_items(self):
-        return Report.select().where(Report.type_ == Report.E,
-                                     ProviderOrClient == self)
+    def is_indebted(self):
+        try:
+            ref = Refund.select().where(Refund.provider_client == self).order_by(
+                Refund.date.desc()).get()
+            if ref.remaining > 0:
+                return True
+        except Exception as e:
+            return False
 
     def __str__(self):
         return u"{}, {}".format(self.name, self.phone)
@@ -308,12 +325,18 @@ class Invoice(BaseModel):
         return Report.select().filter(Report.invoice == self)
 
     @property
+    def debts(self):
+        return Refund.select().filter(Refund.invoice == self)
+
+    @property
     def date(self):
         return self.items.first().date
 
     def deletes_data(self):
         for rep in self.items:
             rep.deletes_data()
+        for debt in self.debts:
+            debt.deletes_data()
         self.delete_instance()
 
     def display_name(self):
@@ -336,6 +359,7 @@ class Buy(BaseModel):
         return u"{owner}/{provd_or_clt}".format(owner=self.owner,
                                                 provd_or_clt=self.provd_or_clt)
 
+    @property
     def items(self):
         try:
             return Report.select().where(Report.buy == self)
@@ -348,7 +372,10 @@ class Buy(BaseModel):
 
     @property
     def date(self):
-        return self.items().first().date
+        try:
+            return self.items.first().date
+        except Exception as e:
+            print(e)
 
     @classmethod
     def last_prod_buy(cls, product=None):
@@ -388,9 +415,7 @@ class Report(BaseModel):
                                                    product=self.product)
 
     def __unicode__(self):
-        return u"{product}/{store}/{type_}".format(type_=self.type_,
-                                                   store=self.store,
-                                                   product=self.product)
+        return self.__str__()
 
     def display_name(self):
         return u"Le porduit {product} enregistré le {date}".format(
@@ -406,7 +431,7 @@ class Report(BaseModel):
             self.remaining = prev_remaining + int(self.qty)
         else:
             self.remaining = prev_remaining - int(self.qty)
-            self.selling_price = self.last_price()
+            self.cost_buying = self.last_selling_price()
             if self.remaining < 0:
                 return ValueError(
                     u"On peut pas utilisé {} puis qu'il ne reste que {}".format(self.qty, prev_remaining))
@@ -452,9 +477,17 @@ class Report(BaseModel):
     def is_out_rpt(self):
         return self.type_ == self.S
 
-    def last_price(self):
-        if self.is_out_rpt and self.last_report:
-            return int(self.last_report.selling_price)
+    def last_selling_price(self):
+        try:
+            last_selling_price = Report.select().where(Report.product == self.product,
+                                                       Report.type_ == Report.E,
+                                                       Report.store == self.store,
+                                                       Report.date < self.date,
+                                                       Report.deleted == False).order_by(Report.date.desc()).get().selling_price
+        except Exception as e:
+            print(e)
+            last_selling_price = 0
+        return int(last_selling_price)
 
 
 class Refund(BaseModel):
@@ -493,7 +526,7 @@ class Refund(BaseModel):
         self.owner = Owner.get(Owner.islog == True)
         print("SAVE BEGIN")
         previous_remaining = int(
-            self.last_remaining().remaining if self.last_remaining() else 0)
+            self.last_refund().remaining if self.last_refund() else 0)
         if self.type_ == self.RB:
             self.remaining = previous_remaining - int(self.amount)
         if self.type_ == self.DT:
@@ -521,7 +554,7 @@ class Refund(BaseModel):
             print("next_rpt", e)
 
     def deletes_data(self):
-        last = self.last_remaining()
+        last = self.last_refund()
         next_ = self.next_rpt()
         self.delete_instance()
         if last:
@@ -531,12 +564,17 @@ class Refund(BaseModel):
                 next_.save()
         return
 
-    def last_remaining(self):
+    def last_refund(self):
         try:
             return Refund.select().where(
                 Refund.deleted == False,
                 Refund.provider_client == self.provider_client,
                 Refund.date < self.date).order_by(Refund.date.desc()).get()
         except Exception as e:
-            print("last_balance_payment", e)
+            # print("last_balance_payment", e)
             return None
+
+    def refund_remaing(self):
+        return Refund.select().where(
+            Refund.deleted == False,
+            Refund.provider_client == self.provider_client).order_by(Refund.date.desc()).get().remaining

@@ -26,17 +26,20 @@ def warning_of_prod():
 
 
 def check_befor_update_data(report):
-    remaining = report.remaining
+    list_error = []
+    if report.last_report:
+        remaining = report.last_report.remaining
+    else:
+        remaining = 0
     for rpt in report.next_rpts():
-        print(rpt.product.name, rpt.qty)
         if rpt.type_ == Report.E:
             remaining += rpt.qty
         if rpt.type_ == Report.S:
-            remaining - rpt.qty
-        print(remaining)
+            remaining -= rpt.qty
         if remaining < 0:
-            return False
-    return True
+            list_error.append(remaining)
+            continue
+    return list_error
 
 
 def check_befor_update_payment(pay):
@@ -51,7 +54,6 @@ def check_befor_update_payment(pay):
                 "{} = last {} + {}".format(balance, previous_balance, rpt.credit))
         if rpt.type_ == Payment.DEBIT:
             balance = previous_balance - int(rpt.debit)
-            print()
             lt.append(
                 "{} = last {} - {}".format(balance, previous_balance, rpt.debit))
         # if balance < 0:

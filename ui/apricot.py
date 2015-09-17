@@ -10,10 +10,10 @@ from datetime import datetime
 from PyQt4.QtCore import QDate, Qt
 from PyQt4.QtGui import QIcon, QVBoxLayout, QGridLayout, QFont
 
-from models import Report
+from models import Report, Refund
 from configuration import Config
 
-from Common.exports_xls import export_dynamic_data
+from Common.peewee import fn
 from Common.ui.common import FWidget, FPageTitle, FormatDate, BttExportXLS
 from Common.ui.util import formatted_number, date_on_or_end, is_int
 from Common.ui.table import FTableWidget, TotalsWidget
@@ -37,7 +37,7 @@ class ApricotsViewWidget(FWidget):
         self.table_op = ApricotsTableWidget(parent=self)
         tablebox.addWidget(self.table_op)
         # self.date_.setFont(QFont("Courier New", 10, True))
-        self.date_.dateChanged.connect(self.refresh)
+        self.date_.dateChanged.connect(self.table_op.refresh_)
         self.btt_export = BttExportXLS(u"Exporter")
         self.btt_export.clicked.connect(self.export_xls)
 
@@ -51,6 +51,7 @@ class ApricotsViewWidget(FWidget):
         self.setLayout(vbox)
 
     def export_xls(self):
+        from Common.exports_xls import export_dynamic_data
         dict_data = {
             'file_name': "arivage.xls",
             'headers': self.table_op.hheaders,
@@ -63,8 +64,8 @@ class ApricotsViewWidget(FWidget):
         }
         export_dynamic_data(dict_data)
 
-    def refresh(self):
-        self.table_op.refresh_(self.date_.text())
+    # def refresh(self):
+    #     self.table_op.refresh_()
 
 
 class ApricotsTableWidget(FTableWidget):
@@ -77,52 +78,76 @@ class ApricotsTableWidget(FTableWidget):
         self.hheaders = [u"models", u"Quantité",
                          u"P Vente", u"Montant"]
 
-        self.stretch_columns = [1, 2, 5]
+        self.stretch_columns = [0, 1, 2, 5]
         self.align_map = {1: "r", 2: "r", 3: "r", 4: "r"}
         self.sorter = True
         self.display_vheaders = False
         self.display_fixed = True
-        self.refresh_(self.parent.date_.text())
+        self.refresh_()
 
-    def refresh_(self, today):
+    def refresh_(self):
         """ """
         # je cache la 6 eme colonne
         self._reset()
-        self.set_data_for(today)
+        self.set_data_for()
         self.refresh()
-        # self.hideColumn(6)
         pw = self.parent.parent.page_width() / 5
         self.setColumnWidth(1, pw)
         self.setColumnWidth(2, pw)
         self.setColumnWidth(3, pw)
 
-    def set_data_for(self, today):
-
+    def set_data_for(self):
+        date = self.parent.date_.text()
         self.data = [(rap.product.name,
                       formatted_number(rap.qty),
                       formatted_number(rap.selling_price),
                       rap.qty * rap.selling_price)
                      for rap in Report.select().where(
             Report.type_ == Report.S,
-            Report.date < date_on_or_end(today, on=False),
-            Report.date > date_on_or_end(today)
+            Report.date < date_on_or_end(date, on=False),
+            Report.date > date_on_or_end(date)
         ).order_by(Report.id.desc())]
+        self.refresh()
 
     def extend_rows(self):
         nb_rows = self.rowCount()
-        self.setRowCount(nb_rows + 1)
-        self.setSpan(nb_rows, 0, 1, 2)
-        self.setItem(nb_rows, 2, TotalsWidget(u"Montant"))
+        date = self.parent.date_.text()
+
+        self.setRowCount(nb_rows + 4)
 
         self.amount_ht = 0
         for row_num in xrange(0, self.data.__len__()):
             mtt = is_int(self.item(row_num, 3).text())
             self.amount_ht += mtt
 
-        amount_ht_item = TotalsWidget(
-            formatted_number(formatted_number(self.amount_ht)))
-        amount_ht_item.setTextAlignment(Qt.AlignRight | Qt.AlignCenter)
-        self.setItem(nb_rows, 3, amount_ht_item)
+        row_num += 1
+        self.setItem(row_num, 2, TotalsWidget(u"Total vente : "))
+        self.amount_apricot = self.amount_ht
+        self.setItem(row_num, 3, TotalsWidget(
+            formatted_number(formatted_number(self.amount_ht))))
+        row_num += 1
+        self.setItem(row_num, 2, TotalsWidget(u"Dette du jour : "))
+        self.total_debt = Refund.select(fn.SUM(Refund.amount)).where(
+            Refund.type_ == Refund.DT, Refund.date < date_on_or_end(
+                date, on=False),  Refund.date > date_on_or_end(date)).scalar() or 0
+        if self.total_debt:
+            self.amount_apricot -= self.total_debt
+        self.setItem(row_num, 3, TotalsWidget(
+            formatted_number(formatted_number(self.total_debt))))
+        row_num += 1
+        self.setItem(row_num, 2, TotalsWidget(u"Dette reglée : "))
+        self.total_refund = Refund.select(fn.SUM(Refund.amount)).where(
+            Refund.type_ == Refund.RB, Refund.date < date_on_or_end(
+                date, on=False),  Refund.date > date_on_or_end(date)).scalar() or 0
+        if self.total_refund:
+            self.amount_apricot += self.total_refund
+        self.setItem(row_num, 3, TotalsWidget(
+            formatted_number(formatted_number(self.total_refund))))
+        row_num += 1
+        self.setItem(row_num, 2, TotalsWidget(u"Caise : "))
+        self.setItem(row_num, 3, TotalsWidget(
+            formatted_number(formatted_number(self.amount_apricot))))
+        self.setSpan(nb_rows, 0, 4, 2)
 
     def _item_for_data(self, row, column, data, context=None):
 

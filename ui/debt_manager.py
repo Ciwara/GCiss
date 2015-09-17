@@ -6,8 +6,9 @@
 from PyQt4.QtGui import (QSplitter, QHBoxLayout, QVBoxLayout, QPushButton,
                          QTableWidgetItem, QPixmap, QFont, QListWidget,
                          QListWidgetItem, QIcon, QMenu, QFormLayout)
-from PyQt4.QtCore import Qt, SIGNAL, SLOT
+from PyQt4.QtCore import Qt, SIGNAL, SLOT, QSize
 
+from Common.peewee import fn
 from models import ProviderOrClient, Invoice, Refund
 
 from Common.ui.common import FWidget, FBoxTitle, Button, LineEdit
@@ -55,11 +56,7 @@ class DebtsViewWidget(FWidget):
         self.setLayout(hbox)
 
     def search(self):
-
-        search_term = self.search_field.text()
-        print(search_term)
-        # self.table_debt.refresh_(search=search_term)
-        # self.search_field.clear()
+        self.table_provid_clt.refresh_(self.search_field.text())
 
     def new_refund(self, provid_clt):
         from ui.refund_edit_add import RefundEditAddDialog
@@ -73,11 +70,13 @@ class ProviderOrClientTableWidget(QListWidget):
 
     def __init__(self, parent, *args, **kwargs):
         super(ProviderOrClientTableWidget, self).__init__(parent)
+
         self.parent = parent
         self.setAutoScroll(True)
-        self.setAutoFillBackground(True)
+        # self.setAutoFillBackground(True)
         self.itemSelectionChanged.connect(self.handleClicked)
         self.refresh_()
+        # self.setStyleSheet("QListWidget::item { border-bottom: 1px; }")
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.popup)
@@ -88,24 +87,35 @@ class ProviderOrClientTableWidget(QListWidget):
             return
         menu = QMenu()
         refund = menu.addAction("Reglement")
+        editaction = menu.addAction("Modifier")
         action = menu.exec_(self.mapToGlobal(pos))
 
+        provid_clt = ProviderOrClient.get(
+            ProviderOrClient.phone == self.item(row).text().split(",")[1])
         if action == refund:
-            provid_clt = ProviderOrClient.get(
-                ProviderOrClient.phone == self.item(row).text().split(",")[1])
-            self.parent.new_refund(provid_clt)
-            # self.refresh_()
+            if provid_clt.is_indebted():
+                self.parent.new_refund(provid_clt)
+            else:
+                self.parent.parent.Notify(
+                    "Le client {} n'est pas endetté".format(self.item(row).text()), "error")
+        if action == editaction:
+            from GCommon.ui.provider_client_edit_add import EditOrAddClientOrProviderDialog
+            self.parent.open_dialog(EditOrAddClientOrProviderDialog, modal=True,
+                                    prov_clt=provid_clt, table_p=self)
 
-    def refresh_(self):
+    def refresh_(self, provid_clt=None):
         """ Rafraichir la liste des provid_cltes"""
         self.clear()
         self.addItem(ProviderOrClientQListWidgetItem(ALL_CONTACTS))
-        for provid_clt in ProviderOrClient.select().where(ProviderOrClient.type_ == ProviderOrClient.CLT):
+        qs = ProviderOrClient.select().where(
+            ProviderOrClient.type_ == ProviderOrClient.CLT)
+        if provid_clt:
+            qs = qs.where(ProviderOrClient.name.contains(provid_clt))
+        for provid_clt in qs:
             self.addItem(ProviderOrClientQListWidgetItem(provid_clt))
 
     def handleClicked(self):
         self.provid_clt = self.currentItem()
-        # self.parent.operation.contact_grp.setEnabled(True)
         self.parent.table_debt.refresh_(
             provid_clt_id=self.provid_clt.provid_clt_id)
 
@@ -116,10 +126,17 @@ class ProviderOrClientQListWidgetItem(QListWidgetItem):
         super(ProviderOrClientQListWidgetItem, self).__init__()
 
         self.provid_clt = provid_clt
+        self.setSizeHint(QSize(0, 30))
         icon = QIcon()
-        icon.addPixmap(
-            QPixmap("{}user_active.png".format(Config.img_cmedia)),
-            QIcon.Normal, QIcon.Off)
+
+        if isinstance(self.provid_clt, str):
+            print("kkkkk")
+        else:
+            icon.addPixmap(
+                QPixmap("{}.png".format(
+                    Config.img_media + "debt" if self.provid_clt.is_indebted() else Config.img_cmedia + "user_active")),
+                QIcon.Normal, QIcon.Off)
+
         self.setIcon(icon)
         self.init_text()
 
@@ -131,8 +148,7 @@ class ProviderOrClientQListWidgetItem(QListWidgetItem):
             font = QFont()
             font.setBold(True)
             self.setFont(font)
-            self.setTextAlignment(
-                Qt.AlignHCenter | Qt.AlignVCenter)
+            self.setTextAlignment(Qt.AlignCenter)
             self.setText(u"Tous")
 
     @property
@@ -151,8 +167,12 @@ class DebtsTableWidget(FTableWidget):
     def __init__(self, parent, *args, **kwargs):
         FTableWidget.__init__(self, parent=parent, *args, **kwargs)
 
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.popup)
+
         self.parent = parent
-        self.hheaders = ["", u"Date", u"Numéro", u"Montant", u"Reste à payé"]
+        self.hheaders = [
+            "", "type", u"Date", u"Numéro", u"Montant", u"Reste à payé"]
 
         self.setDragEnabled(True)
         self.stretch_columns = [0, 1]
@@ -161,46 +181,62 @@ class DebtsTableWidget(FTableWidget):
         self.display_fixed = True
         self.refresh_()
 
+    def popup(self, pos):
+        row = self.selectionModel().selection().indexes()[0].row()
+        if (len(self.data) - 1) < row:
+            return
+        refund = Refund.get(id=self.data[row][0])
+        if refund.type_ != Refund.RB:
+            return
+        menu = QMenu()
+        edit_refund = menu.addAction("Modification")
+        action = menu.exec_(self.mapToGlobal(pos))
+
+        if action == edit_refund:
+            from ui.refund_edit_add import RefundEditAddDialog
+            self.parent.open_dialog(
+                RefundEditAddDialog, modal=True, type_=Refund.RB, refund=refund, table_p=self)
+
     def refresh_(self, provid_clt_id=None, search=None):
         self._reset()
         self.set_data_for(provid_clt_id=provid_clt_id, search=search)
         self.refresh()
 
-        pw = self.parent.parent.page_width() / 7
+        pw = self.parent.parent.page_width() / 8
         self.setColumnWidth(0, 40)
-        self.setColumnWidth(1, pw * 2)
-        self.setColumnWidth(2, pw)
+        self.setColumnWidth(1, pw)
+        self.setColumnWidth(2, pw * 2)
         self.setColumnWidth(3, pw)
         self.setColumnWidth(4, pw)
+        self.setColumnWidth(5, pw)
 
     def set_data_for(self, provid_clt_id=None, search=None):
+        self.provid_clt_id = provid_clt_id
+        qs = Refund.select().where(
+            Refund.status == False).order_by(Refund.date.asc())
 
-        qs = Refund.select().where(Refund.status == False)
         if isinstance(provid_clt_id, int):
             qs = qs.select().where(
                 Refund.provider_client == ProviderOrClient.get(id=provid_clt_id))
-        self.data = [
-            ("", show_date(ref.date), ref.invoice.number, ref.amount, ref.remaining) for ref in qs]
+        self.data = [(ref.id, ref.type_, show_date(ref.date), ref.invoice.number,
+                      ref.amount, ref.remaining) for ref in qs]
 
     def extend_rows(self):
 
         nb_rows = self.rowCount()
         self.setRowCount(nb_rows + 2)
-        self.setSpan(nb_rows, 0, 1, 5)
         nb_rows += 1
-        self.setSpan(nb_rows, 0, 1, 2)
-        self.setItem(nb_rows, 3, TotalsWidget(u"Dette: "))
+        self.setItem(nb_rows, 3, TotalsWidget(u"Dette restante: "))
 
-        self.remaining = is_int(self.item(self.data.__len__() - 1, 4).text())
+        if isinstance(self.provid_clt_id, int):
+            self.remaining = is_int(
+                self.item(self.data.__len__() - 1, 5).text())
+        else:
+            self.remaining = Refund.select(fn.SUM(Refund.remaining)).scalar()
         self.setItem(
             nb_rows, 4, TotalsWidget(formatted_number(self.remaining)))
         self.btt_refund = QPushButton(u"Reglement")
-        # self.btt_refund.released.connect(self.new_refund)
-        # self.setCellWidget(nb_rows + 1, 2, self.btt_refund)
-        # self.setItem(nb_rows, 2, TotalsWidget("KKKKKKK"))
-
-    def new_refund(self):
-        print("cool")
+        self.setSpan(nb_rows - 1, 0, 2, 3)
 
     def _item_for_data(self, row, column, data, context=None):
         if column == 0:
@@ -214,43 +250,6 @@ class DebtsTableWidget(FTableWidget):
         from ui.invoice_show import ShowInvoiceViewWidget
         try:
             self.parent.change_main_context(ShowInvoiceViewWidget,
-                                            invoice_num=self.data[row][2])
+                                            invoice_num=self.data[row][3])
         except IndexError:
             pass
-
-        # inv_number = self.data[row][2]
-        # self.parent.table_refund.refresh_(inv_number)
-
-
-# class RefundTableWidget(FTableWidget):
-
-#     """ Reçoit un numero de telephone et Affiche dans un tableau tout
-#        les transfers effectué par ce numero """
-
-#     def __init__(self, parent, *args, **kwargs):
-#         FTableWidget.__init__(self, parent=parent, *args, **kwargs)
-
-#         self.parent = parent
-#         self.hheaders = [u"Date", u"Numéro", u"Montant", u"Reste à payé"]
-#         self.align_map = {0: 'l', 1: 'l', 2: 'r', 3: 'r'}
-#         self.display_vheaders = True
-#         self.display_fixed = True
-#         self.refresh_(None)
-
-#     def refresh_(self, number):
-#         self._reset()
-#         self.set_data_for(number)
-#         self.refresh()
-#         pw = self.parent.parent.page_width() / 7
-#         self.setColumnWidth(0, pw * 2)
-#         self.setColumnWidth(1, pw)
-#         self.setColumnWidth(2, pw)
-
-#     def set_data_for(self, inv_number):
-#         if not inv_number:
-#             return
-
-#         qs = Refund.select().where(
-#             Refund.invoice == Invoice.get(id=inv_number))
-#         self.data = [(show_date(refund.date), refund.invoice.number,
-#                       refund.amount, refund.remaining) for refund in qs]

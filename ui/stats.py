@@ -85,8 +85,7 @@ class ReportTableWidget(FTableWidget):
         self.align_map = {
             0: 'l', 1: 'r', 2: 'r', 3: 'r', 4: 'r', 5: 'r', 6: 'r', 7: 'r'}
         self.display_vheaders = False
-        self.set_data_for(main_date)
-        self.refresh()
+        self.refresh_period(main_date)
 
     def refresh_period(self, main_date):
         """ """
@@ -106,7 +105,7 @@ class ReportTableWidget(FTableWidget):
         self.total_sum_d6 = 0
         try:
             self.date_on, self.date_end = main_date.current.current
-        except:
+        except Exception as e:
             self.date_on, self.date_end = main_date.current
         products = [(Product.get(id=rpt.product_id).name) for rpt in
                     Report.select(fn.Distinct(Report.product)).where(

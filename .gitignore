@@ -6,6 +6,7 @@
 doc/
 *.pdf
 *.xls
+dist/
 media/img_prod/
 txt_export.py
 txt_import.py

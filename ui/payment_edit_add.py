@@ -8,7 +8,7 @@ import os
 
 from PyQt4.QtCore import Qt, QDate
 from PyQt4.QtGui import (QIcon, QVBoxLayout, QFileDialog, QDialog, QTextEdit,
-                         QIntValidator, QFormLayout, QPushButton, QCompleter)
+                         QFormLayout, QPushButton, QCompleter)
 
 from configuration import Config
 
@@ -83,7 +83,7 @@ class EditOrAddPaymentrDialog(QDialog, FWidget):
 
         payment_date = unicode(self.payment_date_field.text())
         libelle = unicode(self.libelle_field.toPlainText())
-        amount = int(self.amount_field.text())
+        amount = int(self.amount_field.text().replace(" ", ""))
 
         payment = self.payment
         payment.type_ = self.type_

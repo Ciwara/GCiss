@@ -37,11 +37,10 @@ class RefundEditAddDialog(QDialog, FWidget):
         self.parent = parent
         self.table_p = table_p
         self.provid_clt = provid_clt
-
+        self.new = True
         if self.refund:
             self.new = False
-            print("refund", self.refund)
-            self.last_r = self.refund.last_remaining()
+            self.last_r = self.refund
             self.type_ = refund.type_
             self.refund_date_field = FormatDate(self.refund.date)
             self.refund_date_field.setEnabled(False)
@@ -52,29 +51,39 @@ class RefundEditAddDialog(QDialog, FWidget):
             self.amount = refund.amount
             self.provid_clt = refund.provider_client
         else:
-            self.new = True
             self.refund_date_field = FormatDate(QDate.currentDate())
             self.succes_msg = u"Client a été bien enregistré"
             self.title = u"Création d'un nouvel client"
             self.amount = ""
             self.refund = Refund()
-            self.last_r = Refund.select().where(
-                Refund.provider_client == provid_clt).order_by(Refund.date.desc()).get()
+            self.last_r = Refund.get(
+                provider_client=provid_clt)
+
         self.setWindowTitle(self.title)
         self.amount_field = IntLineEdit(unicode(self.amount))
 
         vbox = QVBoxLayout()
+        try:
+            self.last_r.last_refund()
+            # self.remaining = self.last_r.remaining
+        except Exception as e:
+            self
+            print("last_r except ", e)
+            self.last_r = None
+            # self.close()
 
         formbox = QFormLayout()
-        formbox.addRow(FormLabel("Client :"), FormLabel(self.provid_clt.name))
-        formbox.addRow(
-            FormLabel("Dette restante :"), FormLabel(str(formatted_number(self.last_r.remaining)) + Config.DEVISE))
+        formbox.addRow(FormLabel("Client :"),
+                       FormLabel(self.provid_clt.name))
+        formbox.addRow(FormLabel("Dette restante :"),
+                       FormLabel(str(formatted_number(self.last_r.remaining)) + Config.DEVISE))
         formbox.addRow(FormLabel(u"Date : *"), self.refund_date_field)
         formbox.addRow(FormLabel(u"Montant : *"), self.amount_field)
 
         butt = Button_save(u"Enregistrer")
         butt.clicked.connect(self.save_edit)
         formbox.addRow("", butt)
+        # formbox.addRow("", "Le client {} n'est pas endetté")
 
         vbox.addLayout(formbox)
         self.setLayout(vbox)
