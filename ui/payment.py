@@ -44,9 +44,9 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
             QDate(date.today().year, date.today().month, 1))
         self.end_date = FormatDate(QDate.currentDate())
 
-        self.button = Button(u"Ok")
-        self.button.clicked.connect(self.refresh)
         self.table = RapportTableWidget(parent=self)
+        self.button = Button(u"Ok")
+        self.button.clicked.connect(self.table.refresh_)
 
         self.btt_export = BttExportXLS(u"Exporter")
         self.btt_export.clicked.connect(self.export_xls)
@@ -142,6 +142,7 @@ class RapportTableWidget(FTableWidget):
     def set_data_for(self, *args):
 
         date_ = args[0]
+        print(date_)
         self.data = [(show_date(pay.date), pay.libelle, pay.debit, pay.credit,
                       pay.balance, pay.id) for pay in Payment.filter(Payment.date > date_[
                           0], Payment.date < date_[1]).order_by(Payment.date.asc())]

@@ -36,3 +36,4 @@ class Config(Constants):
         # DEBUG = True
     except peewee.OperationalError:
         pass
+    DEBUG = True

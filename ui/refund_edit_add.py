@@ -56,27 +56,29 @@ class RefundEditAddDialog(QDialog, FWidget):
             self.title = u"Création d'un nouvel client"
             self.amount = ""
             self.refund = Refund()
-            self.last_r = Refund.get(
-                provider_client=provid_clt)
+            self.last_r = Refund.select().where(
+                Refund.provider_client == provid_clt).order_by(Refund.date.desc()).get()
 
         self.setWindowTitle(self.title)
         self.amount_field = IntLineEdit(unicode(self.amount))
 
         vbox = QVBoxLayout()
-        try:
-            self.last_r.last_refund()
-            # self.remaining = self.last_r.remaining
-        except Exception as e:
-            self
-            print("last_r except ", e)
-            self.last_r = None
-            # self.close()
+        self.last_remaining = self.last_r.refund_remaing()
+        print(self.last_remaining)
+        # try:
+        #     self.last_r.refund_remaing()
+        # self.remaining = self.last_r.remaining
+        # except Exception as e:
+        #     self
+        #     print("last_r except ", e)
+        #     self.last_r = None
+        # self.close()
 
         formbox = QFormLayout()
         formbox.addRow(FormLabel("Client :"),
                        FormLabel(self.provid_clt.name))
         formbox.addRow(FormLabel("Dette restante :"),
-                       FormLabel(str(formatted_number(self.last_r.remaining)) + Config.DEVISE))
+                       FormLabel(str(formatted_number(self.last_remaining)) + Config.DEVISE))
         formbox.addRow(FormLabel(u"Date : *"), self.refund_date_field)
         formbox.addRow(FormLabel(u"Montant : *"), self.amount_field)
 
@@ -97,10 +99,10 @@ class RefundEditAddDialog(QDialog, FWidget):
         amount = int(self.amount_field.text())
         refund_date = unicode(self.refund_date_field.text())
 
-        self.remaining = self.last_r.remaining
+        # self.remaining = self.last_r.remaining
         if check_field(
                 self.amount_field, "Ce montant ne peut être supperieur au dettes restante {}.".format(
-                self.remaining), amount > self.remaining):
+                self.last_remaining), amount > self.last_remaining):
             return
         refund = self.refund
         refund.type_ = self.type_

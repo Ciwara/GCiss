@@ -186,12 +186,18 @@ class DebtsTableWidget(FTableWidget):
         if (len(self.data) - 1) < row:
             return
         refund = Refund.get(id=self.data[row][0])
-        if refund.type_ != Refund.RB:
-            return
+        # if refund.type_ != Refund.RB:
+        #     return
         menu = QMenu()
         edit_refund = menu.addAction("Modification")
+        del_refund = menu.addAction("Suprimer")
         action = menu.exec_(self.mapToGlobal(pos))
 
+        if action == del_refund:
+
+            from ui.deleteview import DeleteViewWidget
+            self.parent.open_dialog(
+                DeleteViewWidget, modal=True, obj=refund, table_p=self)
         if action == edit_refund:
             from ui.refund_edit_add import RefundEditAddDialog
             self.parent.open_dialog(
@@ -232,7 +238,12 @@ class DebtsTableWidget(FTableWidget):
             self.remaining = is_int(
                 self.item(self.data.__len__() - 1, 5).text())
         else:
-            self.remaining = Refund.select(fn.SUM(Refund.remaining)).scalar()
+            self.remaining = 0
+            # for prov in ProviderOrClient.select().where(
+            #         ProviderOrClient.type_ == ProviderOrClient.CLT):
+            #     rmaing = Refund.select(Refund.provider_client == prov).order_by(
+            #         Refund.date.desc()).get()
+            #     self.remaining += rmaing.remaining if rmaing else 0
         self.setItem(
             nb_rows, 4, TotalsWidget(formatted_number(self.remaining)))
         self.btt_refund = QPushButton(u"Reglement")

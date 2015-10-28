@@ -18,6 +18,11 @@ from Common.ui.util import formatted_number, is_int, uopen_file, show_date
 from Common.ui.common import FWidget, FPageTitle, FLabel, LineEdit, Deleted_btt
 from Common.ui.table import FTableWidget, TotalsWidget
 
+try:
+    unicode
+except:
+    unicode = str
+
 
 class ShowInvoiceViewWidget(FWidget):
 
@@ -65,7 +70,8 @@ class ShowInvoiceViewWidget(FWidget):
         self.setLayout(vbox)
 
     def export_xls(self):
-
+        # TODO A
+        # from Common.exports_xlsx import export_dynamic_data
         from Common.exports_xls import export_dynamic_data
         from Common.cel import cel
         table = self.table_show
@@ -74,7 +80,7 @@ class ShowInvoiceViewWidget(FWidget):
         dict_data = {
             'file_name': "facture.xls",
             'headers': hheaders,
-            'data': table.data,
+            'data': table.get_table_items(),
             "extend_rows": [(3, table.montant_ht)],
             'sheet': self.title,
             'title': self.title,
@@ -114,8 +120,8 @@ class ShowOrderTableWidget(FTableWidget):
 
         self.parent = parent
 
-        self.hheaders = [_(u"Quantité"), _(u"Désignation"), _(u"Prix Unitaire"),
-                         _(u"Montant"), ""]
+        self.hheaders = [
+            u"Quantité", u"Désignation", u"Prix Unitaire", u"Montant", ""]
 
         # self.setContextMenuPolicy(Qt.CustomContextMenu)
         # self.customContextMenuRequested.connect(self.popup)
@@ -143,7 +149,6 @@ class ShowOrderTableWidget(FTableWidget):
     def set_data_for(self):
 
         items = self.parent.invoice.items if self.parent.invoice.items else []
-
         self.data = [(item.qty, item.product.name, item.selling_price,
                       item.qty * item.selling_price, item.id) for item in items]
 
@@ -152,13 +157,13 @@ class ShowOrderTableWidget(FTableWidget):
         from ui.ligne_edit import EditLigneViewWidget
         from ui.deleteview import DeleteViewWidget
         from data_helper import check_befor_update_data
-        if (len(self.data) - 1) < self.selectionModel().selection().indexes()[0].row():
+        row = self.selectionModel().selection().indexes()[0].row()
+        if (len(self.data) - 1) < row:
             return False
         menu = QMenu()
         editaction = menu.addAction("Modifier cette ligne")
         delaction = menu.addAction("Supprimer cette ligne")
         action = menu.exec_(self.mapToGlobal(pos))
-        row = self.selectionModel().selection().indexes()[0].row()
         report = Report.get(id=self.data[row][-1])
         if action == editaction:
             try:
@@ -166,7 +171,6 @@ class ShowOrderTableWidget(FTableWidget):
                                         table_p=self, report=report)
             except IndexError:
                 pass
-
         if action == delaction:
             list_error = check_befor_update_data(report)
             if list_error == []:
@@ -199,3 +203,20 @@ class ShowOrderTableWidget(FTableWidget):
         self.setItem(row_num, 3, TotalsWidget(
             formatted_number(self.montant_ht - self.parent.invoice.paid_amount)))
         self.setSpan(nb_rows, 0, 2, 2)
+
+    def get_table_items(self):
+        """ Recupère les elements du tableau """
+        list_invoice = []
+        for i in range(self.rowCount() - 1):
+            liste_item = []
+            try:
+                liste_item.append(is_int(self.item(i, 0).text()))
+                liste_item.append(unicode(self.item(i, 1).text()))
+                liste_item.append(is_int(self.item(i, 2).text()))
+                liste_item.append(is_int(self.item(i, 3).text()))
+                list_invoice.append(liste_item)
+            except Exception as e:
+                print(e)
+                liste_item.append("")
+        print(list_invoice)
+        return list_invoice

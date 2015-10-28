@@ -571,7 +571,7 @@ class Refund(BaseModel):
                 Refund.provider_client == self.provider_client,
                 Refund.date < self.date).order_by(Refund.date.desc()).get()
         except Exception as e:
-            # print("last_balance_payment", e)
+            print("last_balance_payment", e)
             return None
 
     def refund_remaing(self):
