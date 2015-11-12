@@ -174,7 +174,8 @@ class InvoiceViewWidget(FWidget):
             invoice.save()
             if int(paid_amount) != 0 or invoice_type == Invoice.TYPE_BON:
                 Refund(type_=Refund.DT, owner=self.owner, amount=paid_amount,
-                       invoice=Invoice.get(number=num_invoice), provider_client=clt).save()
+                       date=date_to_datetime(invoice_date), provider_client=clt,
+                       invoice=Invoice.get(number=num_invoice)).save()
         except Exception as e:
             invoice.deletes_data()
             lis_error.append(

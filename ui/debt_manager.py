@@ -29,7 +29,7 @@ class DebtsViewWidget(FWidget):
                                               *args, **kwargs)
         self.parent = parent
         self.parentWidget().setWindowTitle(
-            Config.NAME_ORGA + u"Carnet d'adresse")
+            Config.NAME_ORGA + u"Gestion des dettes")
 
         hbox = QHBoxLayout(self)
 
@@ -176,7 +176,7 @@ class DebtsTableWidget(FTableWidget):
 
         self.setDragEnabled(True)
         self.stretch_columns = [0, 1]
-        self.align_map = {0: 'l', 1: "l", 2: "r", 3: "r", 4: "r"}
+        self.align_map = {0: 'l', 1: "l", 2: "l", 3: "r", 4: "r", 5: "r"}
         self.display_vheaders = True
         self.display_fixed = True
         self.refresh_()
@@ -219,7 +219,7 @@ class DebtsTableWidget(FTableWidget):
     def set_data_for(self, provid_clt_id=None, search=None):
         self.provid_clt_id = provid_clt_id
         qs = Refund.select().where(
-            Refund.status == False).order_by(Refund.date.asc())
+            Refund.status == False).order_by(Refund.date.desc())
 
         if isinstance(provid_clt_id, int):
             qs = qs.select().where(

@@ -14,7 +14,7 @@ from GCommon.models import (BaseModel, SettingsAdmin, Version, FileJoin,
                             Organization, Owner, Category, Store)
 
 FDATE = u"%c"
-now = datetime.now()
+NOW = datetime.now()
 
 
 class Store(Store):
@@ -64,7 +64,7 @@ class Product(BaseModel):
     # class Meta:
     #     ordering = (('name', 'desc'))
 
-    date = DateTimeField(default=now)
+    date = DateTimeField(default=NOW)
     code = CharField(max_length=30, unique=True, null=True)
     name = CharField(max_length=50, unique=True)
     number_parts_box = IntegerField(default=1)
@@ -396,8 +396,8 @@ class Report(BaseModel):
     E = u"Entrée"
     S = u"Sortie"
 
-    date = DateTimeField(verbose_name=("Fait le"), default=now)
-    registered_on = CharField(default=now)
+    date = DateTimeField(verbose_name=("Fait le"), default=NOW)
+    registered_on = CharField(default=NOW)
     store = ForeignKeyField(Store, related_name='stores')
     product = ForeignKeyField(Product, related_name='product_reports')
     buy = ForeignKeyField(Buy, null=True)
@@ -501,7 +501,7 @@ class Refund(BaseModel):
 
     owner = ForeignKeyField(Owner, verbose_name=("Utilisateur"))
     provider_client = ForeignKeyField(ProviderOrClient)
-    date = DateTimeField(default=now)
+    date = DateTimeField(default=NOW)
     invoice = ForeignKeyField(Invoice, null=True)
     amount = IntegerField(verbose_name="Montant")
     remaining = IntegerField(verbose_name="Reste à payer")
@@ -566,15 +566,16 @@ class Refund(BaseModel):
 
     def last_refund(self):
         try:
-            return Refund.select().where(
-                Refund.deleted == False,
-                Refund.provider_client == self.provider_client,
+            return self.all_refund_by_clt_prov().where(
                 Refund.date < self.date).order_by(Refund.date.desc()).get()
         except Exception as e:
             print("last_balance_payment", e)
             return None
 
-    def refund_remaing(self):
+    def all_refund_by_clt_prov(self):
         return Refund.select().where(
             Refund.deleted == False,
-            Refund.provider_client == self.provider_client).order_by(Refund.date.desc()).get().remaining
+            Refund.provider_client == self.provider_client)
+
+    def refund_remaing(self):
+        return self.all_refund_by_clt_prov().order_by(Refund.date.desc()).get().remaining
