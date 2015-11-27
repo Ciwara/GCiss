@@ -76,8 +76,10 @@ class BuyShowViewWidget(FWidget):
 
         buy = self.buy
         reports = Report.select().where(Report.buy == buy)
-        list_error = [(check_befor_update_data(report)) for report in reports]
-        if list_error == [] or list_error == [[]]:
+        # list_error = [(check_befor_update_data(report)) for report in reports]
+        # print(list_error)
+        rpt, remaining = check_befor_update_data(reports)
+        if not rpt:
             reply = QMessageBox.question(self, 'Confirmation',
                                          u"<h3 style='color:red;'>Voulez vous"
                                          u" vraiment annuler ce rapport"
@@ -92,11 +94,10 @@ class BuyShowViewWidget(FWidget):
                 self.change_main_context(DashbordViewWidget)
         else:
             QMessageBox.about(self, u"Alerte",
-                              u"<h3>Vous ne pousez pas supprimer ce rapport car:</h3>"
-                              u"<ul><li></li>"
-                              u" %(err)s"
-                              u"<li>Après la suppression</li></ul>"
-                              % {"err": list_error})
+                              u"""<h3>Vous ne pousez pas supprimer ce rapport car:</h3>
+                              <b>%(prod_name)s </b> aura comme restant : %(remaining)s
+                              Après la suppression</li></ul>"""
+                              % {"prod_name": rpt.product.name, "remaining": remaining})
 
 
 class ShowBuyTableWidget(FTableWidget):

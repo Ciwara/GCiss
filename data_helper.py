@@ -25,21 +25,25 @@ def warning_of_prod():
     return l
 
 
-def check_befor_update_data(report):
-    list_error = []
-    if report.last_report:
-        remaining = report.last_report.remaining
-    else:
-        remaining = 0
-    for rpt in report.next_rpts():
-        if rpt.type_ == Report.E:
-            remaining += rpt.qty
-        if rpt.type_ == Report.S:
-            remaining -= rpt.qty
-        if remaining < 0:
-            list_error.append(remaining)
-            continue
-    return list_error
+def check_befor_update_data(reports):
+    print("check_befor_update_data")
+    for report in reports:
+        list_error = []
+        if report.last_report:
+            remaining = report.last_report.remaining
+        else:
+            remaining = 0
+        for rpt in report.next_rpts():
+            print(rpt.product.name, "=", rpt.qty)
+            if rpt.type_ == Report.E:
+                remaining += rpt.qty
+            if rpt.type_ == Report.S:
+                remaining -= rpt.qty
+            if remaining < 0:
+                print(remaining)
+                return rpt, remaining
+                break
+    return None, ""
 
 
 def check_befor_update_payment(pay):

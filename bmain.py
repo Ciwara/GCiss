@@ -40,5 +40,6 @@ def main():
 
 if __name__ == '__main__':
     setup()
+    # main()
     if cmain():
         main()

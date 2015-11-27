@@ -10,12 +10,11 @@ from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout, QComboBox,
                          QIcon, QGridLayout, QSplitter, QFrame, QCompleter,
                          QPushButton, QMenu, QCompleter, QPixmap)
 
-from Common.ui.util import (check_is_empty, formatted_number, is_int,
-                            SystemTrayIcon, date_to_datetime, field_error, check_field)
+from Common.ui.util import (check_is_empty, check_field, is_int, field_error,
+                            SystemTrayIcon, date_to_datetime, formatted_number)
 from Common.ui.table import FTableWidget, TotalsWidget
-from Common.ui.common import (FWidget, FBoxTitle, ErrorLabel, LineEdit,
-                              FLabel, FormatDate, FLabel,
-                              IntLineEdit, BttSmall, ExtendedComboBox)
+from Common.ui.common import (FWidget, FBoxTitle, IntLineEdit, LineEdit, FLabel,
+                              FormatDate, ErrorLabel, BttSmall, ExtendedComboBox)
 from Common.peewee import fn
 
 from GCommon.ui._product_detail import InfoTableWidget

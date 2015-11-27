@@ -12,7 +12,7 @@ from PyQt4.QtCore import Qt
 from configuration import Config
 from models import Invoice, Report
 from tools.export_pdf import pdf_view
-from tools.export_xls import write_invoice_xls
+# from tools.export_xls import write_invoice_xls
 
 from Common.ui.util import formatted_number, is_int, uopen_file, show_date
 from Common.ui.common import FWidget, FPageTitle, FLabel, LineEdit, Deleted_btt
@@ -61,7 +61,7 @@ class ShowInvoiceViewWidget(FWidget):
         editbox.addWidget(FLabel(u"%s le %s" % (self.invoice.location,
                                                 show_date(self.invoice.date))), 1, 4)
         editbox.addWidget(FLabel(u"Doit: %s " % self.invoice.client), 1, 0)
-        # editbox.addWidget(self.button_pdf, 1, 5)
+        editbox.addWidget(self.button_pdf, 1, 5)
         editbox.addWidget(self.button_dl, 0, 4)
         editbox.addWidget(self.button_xls, 1, 6)
 
@@ -71,14 +71,15 @@ class ShowInvoiceViewWidget(FWidget):
 
     def export_xls(self):
         # TODO A
-        # from Common.exports_xlsx import export_dynamic_data
-        from Common.exports_xls import export_dynamic_data
-        from Common.cel import cel
+        from Common.exports_xlsx import export_dynamic_data
+        # from Common.exports_xls import export_dynamic_data
+        # from Common.cel import cel
+        from num2words import num2words
         table = self.table_show
         hheaders = table.hheaders[:-1]
         endrowx = len(hheaders) - 1
         dict_data = {
-            'file_name': "facture.xls",
+            'file_name': "facture.xlsx",
             'headers': hheaders,
             'data': table.get_table_items(),
             "extend_rows": [(3, table.montant_ht)],
@@ -89,7 +90,7 @@ class ShowInvoiceViewWidget(FWidget):
             "others": [
                 (4, 4, 0, 2, "Doit: {}".format(self.invoice.client)),
                 (45, 45, 0, endrowx,
-                 "Arrêté la présente facture à la somme de : {} FCFA".format(cel(table.montant_ht))),
+                 "Arrêté la présente facture à la somme de : {} FCFA".format(num2words(table.montant_ht, lang="en"))),
                 (50, 50, 0, 0, "Pour acquit"),
                 (50, 50, endrowx, endrowx, "Le fournisseur")],
             'exclude_row': len(table.data) - 2,
@@ -97,7 +98,7 @@ class ShowInvoiceViewWidget(FWidget):
         export_dynamic_data(dict_data)
 
     def printer_pdf(self):
-        pdf_report = pdf_view("invoice.pdf", self.invoice)
+        pdf_report = pdf_view("invoice", self.invoice)
         uopen_file(pdf_report)
 
     def cancellation(self):

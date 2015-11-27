@@ -279,40 +279,41 @@ def write_order_xls(file_name, report):
     # return file_name
 
 
-def write_invoice_xls(file_name, invoice):
+# def write_invoice_xls(file_name, invoice):
 
-    book = xlwt.Workbook(encoding='ascii')
-    sheet = book.add_sheet(u"Commande %s" % Config.NAME_ORGA)
-    sheet.col(1).width = 0x0d00 * 3
-    # sheet.col(4).width = 0x0d00 * 1.5
-    rowx = 0
-    sheet.write_merge(rowx, rowx + 1, 0, 3,
-                      u"Facture de %s" % Config.NAME_ORGA, style_title)
+#     book = xlwt.Workbook(encoding='ascii')
+#     sheet = book.add_sheet(u"Commande %s" % Config.NAME_ORGA)
+#     sheet.col(1).width = 0x0d00 * 3
+# sheet.col(4).width = 0x0d00 * 1.5
+#     rowx = 0
+#     sheet.write_merge(rowx, rowx + 1, 0, 3,
+#                       u"Facture de %s" % Config.NAME_ORGA, style_title)
 
-    rowx += 3
-    date = "Bko le %s" % invoice.date.strftime("%d/%m/%Y")
-    sheet.write_merge(rowx, rowx, 2, 3, date)
+#     rowx += 3
+#     date = "Bko le %s" % invoice.date.strftime("%d/%m/%Y")
+#     sheet.write_merge(rowx, rowx, 2, 3, date)
 
-    hheaders = [u"Quantité", u"Désignation", u"Prix Unitaire",
-                u"Montant"]
-    rowx += 2
-    for colx, val_center in enumerate(hheaders):
-        sheet.write(rowx, colx, val_center, style_t_table)
-    rowx += 1
+#     hheaders = [u"Quantité", u"Désignation", u"Prix Unitaire",
+#                 u"Montant"]
+#     rowx += 2
+#     for colx, val_center in enumerate(hheaders):
+#         sheet.write(rowx, colx, val_center, style_t_table)
+#     rowx += 1
 
-    data = [(item.qty, item.product.name, item.selling_price,
-             item.qty * item.selling_price) for item in Report.filter(invoice=invoice)]
+#     data = [(item.qty, item.product.name, item.selling_price,
+# item.qty * item.selling_price) for item in
+# Report.filter(invoice=invoice)]
 
-    for prod in data:
-        col = 0
-        for val_center in prod:
-            if isinstance(val_center, str):
-                style_ = style
-            else:
-                style_ = int_style
-            sheet.write_merge(rowx, rowx, col, col, val_center, style_)
-            col += 1
-        rowx += 1
-    book.save(file_name)
-    openFile(file_name)
+#     for prod in data:
+#         col = 0
+#         for val_center in prod:
+#             if isinstance(val_center, str):
+#                 style_ = style
+#             else:
+#                 style_ = int_style
+#             sheet.write_merge(rowx, rowx, col, col, val_center, style_)
+#             col += 1
+#         rowx += 1
+#     book.save(file_name)
+#     openFile(file_name)
     # return file_name

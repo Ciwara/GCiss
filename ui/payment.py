@@ -35,7 +35,7 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
         FPeriodHolder.__init__(self, *args, **kwargs)
 
         self.parentWidget().setWindowTitle(
-            Config.APP_NAME + u"    TOUS LES RAPPORTS")
+            Config.APP_NAME + u"   Movements")
         self.parent = parent
 
         self.title = u"Movements"
@@ -115,7 +115,7 @@ class RapportTableWidget(FTableWidget):
         FTableWidget.__init__(self, parent=parent, *args, **kwargs)
 
         self.hheaders = [
-            u"Date", u"Libelle opération", u"débit", u"Crédit", u"Solde", ""]
+            u"Date", u"Libelle opération", u"Débit", u"Crédit", u"Solde", ""]
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.popup)
@@ -123,7 +123,7 @@ class RapportTableWidget(FTableWidget):
         self.parent = parent
 
         self.sorter = True
-        self.stretch_columns = [0, 1, 5]
+        self.stretch_columns = []
         self.align_map = {0: 'l', 1: 'l', 2: 'r', 3: 'r', 4: 'r'}
         self.ecart = -5
         self.display_vheaders = False
@@ -139,10 +139,14 @@ class RapportTableWidget(FTableWidget):
         self.refresh()
         self.hideColumn(len(self.hheaders) - 1)
 
-    def set_data_for(self, *args):
+        pw = self.parent.parent.page_width() / 4
+        self.setColumnWidth(0, pw)
+        self.setColumnWidth(1, pw)
+        self.setColumnWidth(2, pw)
+        self.setColumnWidth(3, pw)
 
+    def set_data_for(self, *args):
         date_ = args[0]
-        print(date_)
         self.data = [(show_date(pay.date), pay.libelle, pay.debit, pay.credit,
                       pay.balance, pay.id) for pay in Payment.filter(Payment.date > date_[
                           0], Payment.date < date_[1]).order_by(Payment.date.asc())]
