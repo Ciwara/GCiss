@@ -199,14 +199,13 @@ class DebtsTableWidget(FTableWidget):
         action = menu.exec_(self.mapToGlobal(pos))
 
         if action == del_refund:
-
             from ui.deleteview import DeleteViewWidget
-            self.parent.open_dialog(
-                DeleteViewWidget, modal=True, obj=refund, table_p=self)
+            self.parent.open_dialog(DeleteViewWidget, modal=True, obj=refund,
+                                    table_p=self)
         if action == edit_refund:
             from ui.refund_edit_add import RefundEditAddDialog
-            self.parent.open_dialog(
-                RefundEditAddDialog, modal=True, type_=Refund.RB, refund=refund, table_p=self)
+            self.parent.open_dialog(RefundEditAddDialog, modal=True,
+                                    type_=Refund.RB, refund=refund, table_p=self)
 
     def refresh_(self, provid_clt_id=None, search=None):
         self._reset()
@@ -226,25 +225,25 @@ class DebtsTableWidget(FTableWidget):
         qs = Refund.select().where(
             Refund.status == False).order_by(Refund.date.desc())
 
+        self.remaining = 0
         if isinstance(provid_clt_id, int):
             qs = qs.select().where(
                 Refund.provider_client == ProviderOrClient.get(id=provid_clt_id))
+        else:
+            for prov in ProviderOrClient.select().where(
+                    ProviderOrClient.type_ == ProviderOrClient.CLT):
+                self.remaining += prov.last_remaining()
+        self.parent.remaining_box.setText(
+            self.display_remaining(formatted_number(self.remaining)))
+
         self.data = [(ref.id, ref.type_, show_date(ref.date), ref.invoice.number,
                       ref.amount, ref.remaining) for ref in qs]
 
     def extend_rows(self):
         if isinstance(self.provid_clt_id, int):
-            self.remaining = is_int(
-                self.item(0, 5).text())
-        else:
-            self.remaining = 0
-            # for prov in ProviderOrClient.select().where(
-            #         ProviderOrClient.type_ == ProviderOrClient.CLT):
-            #     rmaing = Refund.select(Refund.provider_client == prov).order_by(
-            #         Refund.date.desc()).get()
-            #     self.remaining += rmaing.remaining if rmaing else 0
-        self.parent.remaining_box.setText(
-            self.display_remaining(formatted_number(self.remaining)))
+            self.remaining = is_int(self.item(0, 5).text())
+            self.parent.remaining_box.setText(
+                self.display_remaining(formatted_number(self.remaining)))
 
     def _item_for_data(self, row, column, data, context=None):
         if column == 0:

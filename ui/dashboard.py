@@ -10,9 +10,9 @@ from PyQt4.QtGui import (QVBoxLayout, QIcon, QTableWidgetItem)
 from Common.tabpane import tabbox
 from Common.ui.common import FWidget, FPageTitle, FBoxTitle, LineEdit
 from Common.ui.table import FTableWidget
-from Common.ui.util import show_date
+from Common.ui.util import show_date, is_int
 
-from models import Invoice, Buy
+from models import Invoice, Buy, ProviderOrClient
 from configuration import Config
 
 
@@ -59,7 +59,7 @@ class DashbordViewWidget(FWidget):
         self.setLayout(vbox)
 
     def finder(self):
-        self.table_invoice.refresh_(str(self.search_field.text()))
+        self.table_invoice.refresh_(self.search_field.text())
 
 
 class InvoiceTableWidget(FTableWidget):
@@ -93,17 +93,20 @@ class InvoiceTableWidget(FTableWidget):
         # if not value:
         #     print("is value")
         invoices = Invoice.select().order_by(Invoice.number.desc())
+        print(type(value))
         if value:
-            # return
-            qs = (Invoice.location.contains(value) |
-                  # Invoice.date.contains(value) |
-                  Invoice.client.contains(value))
-            try:
-                qs = qs | (Invoice.number.contains(int(value)))
-            except Exception as e:
-                print(e)
-            # invoices = invoices.where(qs).execute()
-            invoices = qs
+            value = str(value)
+            qs = (Invoice.location.contains(value))
+            # | (Invoice.client.contains(value))
+            if is_int(value):
+                print('Int ', value)
+                # qs = (qs | (Invoice.number.contains(int(value))))
+                qs = (qs | (Invoice.number == int(value)))
+
+            invoices = invoices.where(qs).execute()
+            # invoices = Invoice.select().where(
+            #     Invoice.client.name.contains(value))
+            # invoices = qs
         try:
             self.data = [(invoice.number, show_date(invoice.date),
                           invoice.client, "") for invoice in invoices]

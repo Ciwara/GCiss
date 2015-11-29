@@ -68,7 +68,8 @@ class InvoiceViewWidget(FWidget):
         self.add_clt_btt.setFixedWidth(50)
 
         # Combobox widget for add store
-        self.liste_type_invoice = [Invoice.TYPE_FACT, Invoice.TYPE_BON]
+        self.liste_type_invoice = [Invoice.TYPE_FACT, Invoice.TYPE_BON,
+                                   Invoice.TYPE_PROF]
 
         self.box_type_inv = QComboBox()
         for index in range(0, len(self.liste_type_invoice)):

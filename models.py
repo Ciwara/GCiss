@@ -250,13 +250,21 @@ class ProviderOrClient(BaseModel):
                                      Report.invoice.client == self)
 
     def is_indebted(self):
+        flag = False
+        if self.last_remaining() > 0:
+            flag = True
+        return flag
+
+    def last_refund(self):
         try:
-            ref = Refund.select().where(Refund.provider_client == self).order_by(
+            return Refund.select().where(Refund.provider_client == self).order_by(
                 Refund.date.desc()).get()
-            if ref.remaining > 0:
-                return True
         except Exception as e:
-            return False
+            return None
+
+    def last_remaining(self):
+        last_r = self.last_refund()
+        return last_r.remaining if last_r else 0
 
     def __str__(self):
         return u"{}, {}".format(self.name, self.phone)

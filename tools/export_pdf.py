@@ -87,7 +87,7 @@ def pdf_view(filename, invoice):
         ht_en_lettre1, ht_en_lettre2 = controle_caratere(ht_en_lettre +
                                                          " FCFA", 40, 40)
         # p.drawString(260, 119, (ht_en_lettre + " FCFA"))
-        p.drawString(266, 127, (ht_en_lettre1))
+        p.drawString(272, 126, (ht_en_lettre1))
         p.drawString(53, 102, (ht_en_lettre2))
 
         # legal_infos, legal_infos1 = controle_caratere(Config.BP, 55, 55)
