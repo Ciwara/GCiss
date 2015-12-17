@@ -24,7 +24,6 @@ from GCommon.ui._product_detail import InfoTableWidget
 from ui._resultat_table import ResultatTableWidget
 from ui.buy_show import BuyShowViewWidget
 
-
 try:
     unicode
 except:

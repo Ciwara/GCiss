@@ -12,8 +12,6 @@ from models import Report, Store, Product
 from Common.ui.table import FTableWidget, TotalsWidget
 from Common.ui.util import formatted_number, date_on_or_end
 
-from Common.exports_xls import export_dynamic_data
-
 
 class StatViewWidget(FWidget, FPeriodHolder):
 
@@ -48,8 +46,10 @@ class StatViewWidget(FWidget, FPeriodHolder):
         self.table_rpt.refresh()
 
     def export_xls(self):
+        from Common.exports_xlsx import export_dynamic_data
+
         dict_data = {
-            'file_name': "semaine.xls",
+            'file_name': "Semaine.xlsx",
             'headers': self.table_rpt.hheaders,
             'data': self.table_rpt.data,
             "extend_rows": [(1, self.table_rpt.total_sum_d1),

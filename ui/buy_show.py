@@ -54,11 +54,12 @@ class BuyShowViewWidget(FWidget):
         self.setLayout(vbox)
 
     def export_xls(self):
-        from Common.exports_xls import export_dynamic_data
+        # from Common.exports_xls import export_dynamic_data
+        from Common.exports_xlsx import export_dynamic_data
         table = self.table_show
         hheaders = table.hheaders[:-1]
         dict_data = {
-            'file_name': "arivage.xls",
+            'file_name': "arivage.xlsx",
             'headers': hheaders,
             'data': self.table_show.data,
             "extend_rows": [(4, self.table_show.v_amount_tt),
@@ -76,8 +77,6 @@ class BuyShowViewWidget(FWidget):
 
         buy = self.buy
         reports = Report.select().where(Report.buy == buy)
-        # list_error = [(check_befor_update_data(report)) for report in reports]
-        # print(list_error)
         rpt, remaining = check_befor_update_data(reports)
         if not rpt:
             reply = QMessageBox.question(self, 'Confirmation',

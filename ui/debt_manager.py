@@ -134,12 +134,9 @@ class ProviderOrClientQListWidgetItem(QListWidgetItem):
         self.setSizeHint(QSize(0, 30))
         icon = QIcon()
 
-        if isinstance(self.provid_clt, str):
-            print("kkkkk")
-        else:
-            icon.addPixmap(
-                QPixmap("{}.png".format(
-                    Config.img_media + "debt" if self.provid_clt.is_indebted() else Config.img_cmedia + "user_active")),
+        if not isinstance(self.provid_clt, str):
+            icon.addPixmap(QPixmap("{}.png".format(
+                Config.img_media + "debt" if self.provid_clt.is_indebted() else Config.img_cmedia + "user_active")),
                 QIcon.Normal, QIcon.Off)
 
         self.setIcon(icon)
@@ -269,5 +266,5 @@ class DebtsTableWidget(FTableWidget):
 
     def display_remaining(self, text):
         return """
-        <h2>Reste à payer <b>{}</b> Fcfa </h2>
+        <h2>Dette restante: <b>{}</b> Fcfa </h2>
         """.format(text)

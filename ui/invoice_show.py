@@ -72,8 +72,6 @@ class ShowInvoiceViewWidget(FWidget):
     def export_xls(self):
         # TODO A
         from Common.exports_xlsx import export_dynamic_data
-        # from Common.exports_xls import export_dynamic_data
-        # from Common.cel import cel
         from num2words import num2words
         table = self.table_show
         hheaders = table.hheaders[:-1]
@@ -219,5 +217,4 @@ class ShowOrderTableWidget(FTableWidget):
             except Exception as e:
                 print(e)
                 liste_item.append("")
-        print(list_invoice)
         return list_invoice

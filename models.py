@@ -49,7 +49,6 @@ class Store(Store):
                   .order_by(Report.date.desc()))
         if rpt:
             remaining = rpt.remaining
-            # print(rpt.product.name)
         return remaining, prod.number_parts_box
 
 
@@ -316,6 +315,10 @@ class Invoice(BaseModel):
     def save(self):
         self.owner = Owner.get(Owner.islog == True)
         super(Invoice, self).save()
+
+    # @property
+    # def clt_name(self):
+    #     return self.client.name
 
     @property
     def get_next_number(self):

@@ -64,7 +64,6 @@ class RefundEditAddDialog(QDialog, FWidget):
 
         vbox = QVBoxLayout()
         self.last_remaining = self.last_r.refund_remaing()
-        print(self.last_remaining)
         # try:
         #     self.last_r.refund_remaing()
         # self.remaining = self.last_r.remaining

@@ -8,7 +8,7 @@ from reportlab.lib.pagesizes import A4
 from models import Report
 from num2words import num2words
 from configuration import Config
-from Common.ui.util import get_temp_filename
+from Common.ui.util import get_temp_filename, formatted_number
 
 
 def pdf_view(filename, invoice):
@@ -64,9 +64,10 @@ def pdf_view(filename, invoice):
         for i in items_invoice:
             p.drawString(x, y, str(i.qty).rjust(11, ' '))
             p.drawString(x + 78, y, str(i.product.name))
-            p.drawString(x + 340, y, str(i.selling_price).rjust(10, ' '))
-            p.drawString(
-                x + 430, y, str(i.selling_price * i.qty).rjust(10, ' '))
+            p.drawString(x + 340, y,
+                         str(formatted_number(i.selling_price)).rjust(10, ' '))
+            p.drawString(x + 430, y, str(formatted_number(
+                i.selling_price * i.qty)).rjust(10, ' '))
             y -= 23
         # on teste le type
         if invoice.type_ == "Proforma":
@@ -83,7 +84,7 @@ def pdf_view(filename, invoice):
 
         ht_en_lettre = num2words(ht, lang="fr")
 
-        p.drawString(495, 160, str(ht).rjust(5, ' '))
+        p.drawString(x + 430, 160, str(formatted_number(ht)).rjust(10, ' '))
         ht_en_lettre1, ht_en_lettre2 = controle_caratere(ht_en_lettre +
                                                          " FCFA", 40, 40)
         # p.drawString(260, 119, (ht_en_lettre + " FCFA"))

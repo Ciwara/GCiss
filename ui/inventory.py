@@ -65,11 +65,11 @@ class InventoryViewWidget(FWidget):
         self.refresh()
 
     def export_xls(self):
-        from Common.exports_xls import export_dynamic_data
+        from Common.exports_xlsx import export_dynamic_data
         table = self.invent_table
         hheaders = table.hheaders
         dict_data = {
-            'file_name': "Inventaire.xls",
+            'file_name': "Inventaire.xlsx",
             'headers': hheaders,
             'data': table.data,
             "extend_rows": [(3, table.sum_totals), ],

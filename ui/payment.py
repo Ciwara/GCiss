@@ -77,9 +77,9 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
         self.setLayout(vbox)
 
     def export_xls(self):
-        from Common.exports_xls import export_dynamic_data
+        from Common.exports_xlsx import export_dynamic_data
         dict_data = {
-            'file_name': "versement.xls",
+            'file_name': "versement.xlsx",
             'headers': self.table.hheaders[:-1],
             'data': self.table.data,
             "extend_rows": [(1, self.table.label_mov_tt),

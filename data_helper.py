@@ -34,13 +34,11 @@ def check_befor_update_data(reports):
         else:
             remaining = 0
         for rpt in report.next_rpts():
-            print(rpt.product.name, "=", rpt.qty)
             if rpt.type_ == Report.E:
                 remaining += rpt.qty
             if rpt.type_ == Report.S:
                 remaining -= rpt.qty
             if remaining < 0:
-                print(remaining)
                 return rpt, remaining
                 break
     return None, ""
@@ -51,7 +49,6 @@ def check_befor_update_payment(pay):
     lt = []
     for rpt in pay.next_rpts():
         previous_balance = int(rpt.last_balance_payment())
-        print(rpt)
         if rpt.type_ == Payment.CREDIT:
             balance = previous_balance + int(rpt.credit)
             lt.append(
@@ -62,5 +59,4 @@ def check_befor_update_payment(pay):
                 "{} = last {} - {}".format(balance, previous_balance, rpt.debit))
         # if balance < 0:
         #     return False
-    print(lt)
     return True

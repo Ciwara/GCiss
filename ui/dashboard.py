@@ -91,27 +91,31 @@ class InvoiceTableWidget(FTableWidget):
 
     def set_data_for(self, value):
         # if not value:
-        #     print("is value")
+        #     print("is value
         invoices = Invoice.select().order_by(Invoice.number.desc())
-        print(type(value))
         if value:
             value = str(value)
             qs = (Invoice.location.contains(value))
             # | (Invoice.client.contains(value))
+            t = [clt.id for clt in ProviderOrClient.select().where(
+                ProviderOrClient.name.contains(value))]
+            print(t)
             if is_int(value):
                 print('Int ', value)
                 # qs = (qs | (Invoice.number.contains(int(value))))
                 qs = (qs | (Invoice.number == int(value)))
+                invoices = invoices.where(qs).execute()
+            else:
+                invoices = [clt.invoices() for clt in ProviderOrClient.select().where(
+                    ProviderOrClient.name.contains(value))]
+                # qs = (qs | (Invoice.client.id >> t))
 
-            invoices = invoices.where(qs).execute()
-            # invoices = Invoice.select().where(
-            #     Invoice.client.name.contains(value))
-            # invoices = qs
+        print(invoices)
         try:
             self.data = [(invoice.number, show_date(invoice.date),
                           invoice.client, "") for invoice in invoices]
         except Exception as e:
-            print(e)
+            print("Exception ", e)
 
     def _item_for_data(self, row, column, data, context=None):
         if column == self.data[0].__len__() - 1:
