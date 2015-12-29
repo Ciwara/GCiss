@@ -99,7 +99,7 @@ class InvoiceTableWidget(FTableWidget):
             # | (Invoice.client.contains(value))
             t = [clt.id for clt in ProviderOrClient.select().where(
                 ProviderOrClient.name.contains(value))]
-            print(t)
+            # print(t)
             if is_int(value):
                 print('Int ', value)
                 # qs = (qs | (Invoice.number.contains(int(value))))
@@ -110,7 +110,7 @@ class InvoiceTableWidget(FTableWidget):
                     ProviderOrClient.name.contains(value))]
                 # qs = (qs | (Invoice.client.id >> t))
 
-        print(invoices)
+        # print(invoices)
         try:
             self.data = [(invoice.number, show_date(invoice.date),
                           invoice.client, "") for invoice in invoices]
