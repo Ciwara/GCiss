@@ -34,7 +34,8 @@ class DashbordViewWidget(FWidget):
         table_buying = QVBoxLayout()
 
         self.search_field = LineEdit()
-        self.search_field.setPlaceholderText("Rechercher")
+        self.search_field.setPlaceholderText(
+            "Taper un nom client ou num. facture")
         self.search_field.setMaximumSize(
             500, self.search_field.maximumSize().height())
         self.search_field.textChanged.connect(self.finder)
@@ -90,27 +91,20 @@ class InvoiceTableWidget(FTableWidget):
         self.setColumnWidth(2, pw)
 
     def set_data_for(self, value):
-        # if not value:
-        #     print("is value
-        invoices = Invoice.select().order_by(Invoice.number.desc())
         if value:
             value = str(value)
-            qs = (Invoice.location.contains(value))
-            # | (Invoice.client.contains(value))
-            t = [clt.id for clt in ProviderOrClient.select().where(
-                ProviderOrClient.name.contains(value))]
-            # print(t)
             if is_int(value):
-                print('Int ', value)
-                # qs = (qs | (Invoice.number.contains(int(value))))
-                qs = (qs | (Invoice.number == int(value)))
-                invoices = invoices.where(qs).execute()
+                qs = ((Invoice.number == int(value)))
+                invoices = invoices.where(qs)
             else:
-                invoices = [clt.invoices() for clt in ProviderOrClient.select().where(
-                    ProviderOrClient.name.contains(value))]
-                # qs = (qs | (Invoice.client.id >> t))
+                invoices = []
+                for clt in ProviderOrClient.select().where(
+                        ProviderOrClient.name.contains(value)).iterator():
+                    for invoice in clt.invoices().iterator():
+                        invoices.append(invoice)
+        else:
+            invoices = Invoice.select().order_by(Invoice.number.desc()).iterator()
 
-        # print(invoices)
         try:
             self.data = [(invoice.number, show_date(invoice.date),
                           invoice.client, "") for invoice in invoices]

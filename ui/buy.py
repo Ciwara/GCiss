@@ -46,6 +46,7 @@ class BuyViewWidget(FWidget):
         self.name_client = LineEdit()
         self.search_field = LineEdit()
         self.search_field.setPlaceholderText("Rechercher un article")
+        self.search_field.setMaximumHeight(40)
         self.search_field.textChanged.connect(self.finder)
         # self.search_field.setFixedWidth(200)
 

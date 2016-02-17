@@ -36,6 +36,7 @@ class DebtsViewWidget(FWidget):
         # self.balace_box.addWidget(FLabel(u"Reste à payer :"), 0, 2)
         # self.balace_box.setRowStretch(1, 2)
         self.remaining_box = FLabel()
+        self.remaining_box.setMaximumHeight(40)
 
         self.table_debt = DebtsTableWidget(parent=self)
         self.table_provid_clt = ProviderOrClientTableWidget(parent=self)
@@ -43,7 +44,7 @@ class DebtsViewWidget(FWidget):
         self.search_field = LineEdit()
         self.search_field.textChanged.connect(self.search)
         self.search_field.setPlaceholderText(u"Nom ou  numéro tel")
-
+        self.search_field.setMaximumHeight(40)
         splitter = QSplitter(Qt.Horizontal)
 
         self.splitter_left = QSplitter(Qt.Vertical)
@@ -234,7 +235,7 @@ class DebtsTableWidget(FTableWidget):
             self.display_remaining(formatted_number(self.remaining)))
 
         self.data = [(ref.id, ref.type_, show_date(ref.date), ref.invoice.number,
-                      ref.amount, ref.remaining) for ref in qs]
+                      ref.amount, ref.remaining) for ref in qs.iterator()]
 
     def extend_rows(self):
         if isinstance(self.provid_clt_id, int):

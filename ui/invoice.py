@@ -81,6 +81,7 @@ class InvoiceViewWidget(FWidget):
         self.search_field.setPlaceholderText("Rechercher un article")
         self.search_field.textChanged.connect(self.finder)
         # self.search_field.setFixedWidth(250)
+        self.search_field.setMaximumHeight(40)
 
         self.table_invoice = InvoiceTableWidget(parent=self)
         self.table_resultat = ResultatTableWidget(parent=self)
