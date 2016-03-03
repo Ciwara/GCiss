@@ -19,7 +19,7 @@ from Common.ui.common import (FWidget, FPageTitle, FormLabel, BttExportXLS,
                               IntLineEdit, Button_save, FormatDate, Deleted_btt)
 
 from ui.order_remove_save import OrderRemoveWidget
-from tools.export_xls import write_order_xls
+# from tools.export_xls import write_order_xls
 
 
 class OrderViewWidget(FWidget):

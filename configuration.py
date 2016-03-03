@@ -37,3 +37,4 @@ class Config(Constants):
     except peewee.OperationalError:
         pass
     DEBUG = True
+    ORG_LOGO = "org_logo.png"

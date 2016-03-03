@@ -38,15 +38,15 @@ class ApricotsViewWidget(FWidget):
         gridbox = QGridLayout()
         self.title = "La caise"
         tablebox.addWidget(FPageTitle(self.title))
-
         self.date_ = FormatDate(QDate.currentDate())
+        self.btt_export = BttExportXLS(u"Exporter")
+        self.btt_export.setEnabled(False)
+        self.btt_export.clicked.connect(self.export_xls)
+
         self.table_op = ApricotsTableWidget(parent=self)
         tablebox.addWidget(self.table_op)
         # self.date_.setFont(QFont("Courier New", 10, True))
         self.date_.dateChanged.connect(self.table_op.refresh_)
-        self.btt_export = BttExportXLS(u"Exporter")
-        self.btt_export.setEnabled(False)
-        self.btt_export.clicked.connect(self.export_xls)
 
         gridbox.addWidget(self.date_, 0, 0)
         gridbox.addWidget(self.btt_export, 0, 2)

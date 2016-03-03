@@ -6,7 +6,7 @@
 
   !define MUI_PRODUCT "GStock"
   !define MUI_FILE "bmain"
-  !define MUI_VERSION "5.2.0"
+  !define MUI_VERSION "5.4.0"
   !define MUI_BRANDINGTEXT "${MUI_PRODUCT} ${MUI_VERSION}"
   !define IMAGES "images"
   !define CIMAGES "cimages"
