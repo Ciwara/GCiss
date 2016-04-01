@@ -74,7 +74,8 @@ class InventoryViewWidget(FWidget):
             'data': table.data,
             "extend_rows": [(3, table.sum_totals), ],
             'sheet': self.title,
-            'title': self.title,
+            # 'title': self.title,
+            'format_money': ["C:C", "D:D", ],
             'widths': table.stretch_columns,
             "date": "Du {} au {}".format(
                 date_to_datetime(self.on_date.text()).strftime(u'%d/%m/%Y'),

@@ -5,7 +5,7 @@
 from __future__ import (
     unicode_literals, absolute_import, division, print_function)
 
-from PyQt4.QtGui import (QIcon, QVBoxLayout,
+from PyQt4.QtGui import (QIcon, QVBoxLayout, QDialog,
                          QGridLayout, QMenu, QPushButton, QMessageBox)
 from PyQt4.QtCore import Qt
 
@@ -19,11 +19,12 @@ from models import Buy, Report, Store
 from data_helper import check_befor_update_data
 
 
-class BuyShowViewWidget(FWidget):
+class BuyShowViewWidget(QDialog, FWidget):
 
     def __init__(self, buy="", parent=0, *args, **kwargs):
-        super(BuyShowViewWidget, self).__init__(parent=parent,
-                                                *args, **kwargs)
+        # super(BuyShowViewWidget, self).__init__(parent=parent,
+        #                                         *args, **kwargs)
+        QDialog.__init__(self, parent, *args, **kwargs)
         self.buy = buy
 
         self.parentWidget().setWindowTitle(Config.APP_NAME +
@@ -60,13 +61,14 @@ class BuyShowViewWidget(FWidget):
         dict_data = {
             'file_name': "arivage.xlsx",
             'headers': hheaders,
-            'data': self.table_show.data,
-            "extend_rows": [(4, self.table_show.v_amount_tt),
+            'data': table.data,
+            "extend_rows": [(4, table.v_amount_tt),
                             (5, ""),
-                            (6, self.table_show.b_f_tt)],
+                            (6, table.b_f_tt)],
             'sheet': self.title,
-            'title': self.title,
-            'widths': self.table_show.stretch_columns,
+            # 'title': self.title,
+            'format_money': ["C:C", "D:D", "E:E", "F:F", "G:G"],
+            'widths': table.stretch_columns,
             "date": self.buy.date.strftime(u'%x'),
             'exclude_row':  len(table.data) - 2,
         }

@@ -10,7 +10,7 @@ from PyQt4.QtGui import (QVBoxLayout, QIcon, QTableWidgetItem)
 from Common.tabpane import tabbox
 from Common.ui.common import FWidget, FPageTitle, FBoxTitle, LineEdit
 from Common.ui.table import FTableWidget
-from Common.ui.util import show_date, is_int
+from Common.ui.util import is_int
 
 from models import Invoice, Buy, ProviderOrClient
 from configuration import Config
@@ -116,7 +116,7 @@ class InvoiceTableWidget(FTableWidget):
         if column == self.data[0].__len__() - 1:
             return QTableWidgetItem(
                 QIcon(u"{img_media}{img}".format(img_media=Config.img_cmedia,
-                                                 img="go-next.png")), (u"voir"))
+                                                 img="find.png")), (u"voir"))
 
         return super(InvoiceTableWidget, self)._item_for_data(row, column,
                                                               data, context)
@@ -160,7 +160,7 @@ class BuyTableWidget(FTableWidget):
         if column == self.data[0].__len__() - 1:
             return QTableWidgetItem(
                 QIcon(u"{img_media}{img}".format(img_media=Config.img_cmedia,
-                                                 img="go-next.png")), (u"voir"))
+                                                 img="find.png")), (u"voir"))
 
         return super(BuyTableWidget, self)._item_for_data(row, column,
                                                           data, context)
@@ -169,9 +169,15 @@ class BuyTableWidget(FTableWidget):
         last_column = self.hheaders.__len__() - 1
         if column != last_column:
             return
+        # try:
+        #     self.parent.change_main_context(
+        #         BuyShowViewWidget, buy=Buy.get(id=self.data[row][0]))
+        # except IndexError:
+        #     pass
+
+        from ui.buy_show import BuyShowViewWidget
         try:
-            from ui.buy_show import BuyShowViewWidget
-            self.parent.change_main_context(
-                BuyShowViewWidget, buy=Buy.get(id=self.data[row][0]))
-        except IndexError:
-            pass
+            self.parent.open_dialog(BuyShowViewWidget, modal=True, opacity=100,
+                                    buy=Buy.get(id=self.data[row][0]))
+        except Exception as e:
+            print(e)

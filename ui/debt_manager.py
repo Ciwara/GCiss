@@ -13,7 +13,7 @@ from models import ProviderOrClient, Invoice, Refund
 
 from Common.ui.common import FWidget, FBoxTitle, Button, LineEdit, FLabel
 from Common.ui.table import FTableWidget, TotalsWidget
-from Common.ui.util import formatted_number, show_date, is_int
+from Common.ui.util import formatted_number, is_int
 
 from configuration import Config
 
@@ -234,7 +234,7 @@ class DebtsTableWidget(FTableWidget):
         self.parent.remaining_box.setText(
             self.display_remaining(formatted_number(self.remaining)))
 
-        self.data = [(ref.id, ref.type_, show_date(ref.date), ref.invoice.number,
+        self.data = [(ref.id, ref.type_, ref.date, ref.invoice.number,
                       ref.amount, ref.remaining) for ref in qs.iterator()]
 
     def extend_rows(self):

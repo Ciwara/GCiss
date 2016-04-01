@@ -66,6 +66,7 @@ class ApricotsViewWidget(FWidget):
             "extend_rows": [(3, self.table_op.amount_ht), ],
             'sheet': self.title,
             'title': self.title,
+            'format_money': ["C:C", "D:D", ],
             'widths': self.table_op.stretch_columns,
             "date": self.date_.text()
         }
@@ -82,8 +83,7 @@ class ApricotsTableWidget(FTableWidget):
 
         self.parent = parent
 
-        self.hheaders = [u"models", u"Quantité",
-                         u"P Vente", u"Montant"]
+        self.hheaders = [u"models", u"Quantité",  u"P Vente", u"Montant"]
 
         self.stretch_columns = [0, 1, 2, 5]
         self.align_map = {1: "r", 2: "r", 3: "r", 4: "r"}

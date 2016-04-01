@@ -15,7 +15,7 @@ from configuration import Config
 from Common.ui.common import (FormLabel, FWidget, FPeriodHolder, FPageTitle,
                               Button, BttExportXLS, FormatDate)
 from Common.ui.table import FTableWidget, TotalsWidget
-from Common.ui.util import formatted_number, is_int, show_date, date_to_datetime
+from Common.ui.util import formatted_number, is_int, date_to_datetime
 from models import Payment
 from ui.payment_edit_add import EditOrAddPaymentrDialog
 
@@ -97,6 +97,7 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
                 ("C", "E", "Solde au {} = {}".format(self.now, self.table.balance_tt)), ],
             'sheet': self.title,
             # 'title': self.title,
+            'format_money': ['C:C', 'D:D', 'E:E', ],
             'widths': self.table.stretch_columns,
             'exclude_row': len(self.table.data) - 1,
             "date": "Du {} au {}".format(
@@ -156,7 +157,7 @@ class RapportTableWidget(FTableWidget):
 
     def set_data_for(self, *args):
         date_ = args[0]
-        self.data = [(show_date(pay.date), pay.libelle, pay.debit, pay.credit,
+        self.data = [(pay.date, pay.libelle, pay.debit, pay.credit,
                       pay.balance, pay.id) for pay in Payment.filter(Payment.date > date_[
                           0], Payment.date < date_[1]).order_by(Payment.date.desc())]
         self.refresh()

@@ -15,7 +15,7 @@ from configuration import Config
 from Common.ui.common import (FormLabel, FWidget, FPeriodHolder, FPageTitle,
                               Button, BttExportXLS, FormatDate, ExtendedComboBox)
 from Common.ui.table import FTableWidget, TotalsWidget
-from Common.ui.util import formatted_number, is_int, show_date, date_to_datetime
+from Common.ui.util import formatted_number, is_int, date_to_datetime
 from models import Invoice, ProviderOrClient
 from ui.payment_edit_add import EditOrAddPaymentrDialog
 
@@ -173,7 +173,7 @@ class RapportTableWidget(FTableWidget):
         else:
             self.provider_clt = "Tous"
 
-        # self.data = [(show_date(pay.date), pay.libelle, pay.debit, pay.credit,
+        # self.data = [(pay.date, pay.libelle, pay.debit, pay.credit,
         #               pay.balance, pay.id) for pay in qs.filter(Invoice.date > date_[
         # 0], Invoice.date < date_[1]).order_by(Invoice.number.asc())]
         self.data = [(vl.date, vl.number, vl.client.name, vl.amount_ivoice,)
