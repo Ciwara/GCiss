@@ -54,7 +54,6 @@ class BuyShowViewWidget(FWidget):
         self.setLayout(vbox)
 
     def export_xls(self):
-        # from Common.exports_xls import export_dynamic_data
         from Common.exports_xlsx import export_dynamic_data
         table = self.table_show
         hheaders = table.hheaders[:-1]

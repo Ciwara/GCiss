@@ -336,6 +336,10 @@ class Invoice(BaseModel):
         return Report.select().filter(Report.invoice == self)
 
     @property
+    def amount_ivoice(self):
+        return sum([val.selling_price for val in self.items])
+
+    @property
     def debts(self):
         return Refund.select().filter(Refund.invoice == self)
 

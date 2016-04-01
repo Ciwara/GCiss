@@ -14,6 +14,8 @@ class Config(Constants):
     """ docstring for Config
                             """
 
+    DATEFORMAT = u'%d/%m/%Y'
+
     def __init__(self):
         Constants.__init__(self)
 

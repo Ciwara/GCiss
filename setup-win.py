@@ -13,10 +13,12 @@ from configuration import Config
 from distutils.core import setup
 import py2exe
 
+
 class Target(object):
     '''Target is the baseclass for all executables that are created.
     It defines properties that are shared by all of them.
     '''
+
     def __init__(self, **kw):
         self.__dict__.update(kw)
 
@@ -89,7 +91,7 @@ main_app = Target(
     # comments = "Some Comments",
     # internal_name = "spam",
 
-    script=Config.NAME_MAIN, # path of the main script
+    script=Config.NAME_MAIN,  # path of the main script
 
     # Allows to specify the basename of the executable, if different from 'main_app'
     # dest_base = "main_app",
@@ -97,15 +99,15 @@ main_app = Target(
     # Icon resources:[(resource_id, path to .ico file), ...]
     # icon_resources=[(1, r"main_app.ico")]
 
-    other_resources = [(RT_MANIFEST, 1, (manifest_template % dict(prog="mmain", level="asInvoker")).encode("utf-8")),
-    # for bitmap resources, the first 14 bytes must be skipped when reading the file:
-    #                    (RT_BITMAP, 1, open("bitmap.bmp", "rb").read()[14:]),
-                      ]
-    )
+    other_resources=[(RT_MANIFEST, 1, (manifest_template % dict(prog="mmain", level="asInvoker")).encode("utf-8")),
+                     # for bitmap resources, the first 14 bytes must be skipped when reading the file:
+                     #                    (RT_BITMAP, 1, open("bitmap.bmp", "rb").read()[14:]),
+                     ]
+)
 
 
 py2exe_options = dict(
-    packages = ['reportlab',
+    # packages = ['reportlab',
     # 'reportlab.graphics.charts',
     # 'reportlab.graphics.samples',
     # 'reportlab.graphics.widgets',
@@ -115,16 +117,16 @@ py2exe_options = dict(
     # 'reportlab.pdfbase',
     # 'reportlab.pdfgen',
     # 'reportlab.platypus',
-    ],
-##    excludes = "toFspecials Tkinter".split(),
-##    ignores = "dotblas gnosis.xml.pickle.parsers._cexpat mx.DateTime".split(),
+    # ],
+    ##    excludes = "toFspecials Tkinter".split(),
+    ##    ignores = "dotblas gnosis.xml.pickle.parsers._cexpat mx.DateTime".split(),
     # dll_excludes = "MSVCP90.dll mswsock.dll powrprof.dll".split(),
     includes=['sip', 'PyQt4'],
     optimize=2,
-    compressed=True, # uncompressed may or may not have a faster startup
+    compressed=True,  # uncompressed may or may not have a faster startup
     bundle_files=3,
     dist_dir='dist',
-    )
+)
 
 
 # Some options can be overridden by command line options...
@@ -139,6 +141,5 @@ setup(name="name",
 
       # py2exe options
       zipfile=None,
-      options={"py2exe": py2exe_options,},
+      options={"py2exe": py2exe_options, },
       )
-

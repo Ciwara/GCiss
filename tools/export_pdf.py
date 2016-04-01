@@ -18,7 +18,7 @@ def pdf_view(filename, invoice):
 
     if not filename:
         filename = get_temp_filename('pdf')
-        print(filename)
+        # print(filename)
     # on recupere les items de la facture
     items_invoice = Report.filter(invoice=invoice)
 

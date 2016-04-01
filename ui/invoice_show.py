@@ -4,7 +4,7 @@
 from __future__ import (
     unicode_literals, absolute_import, division, print_function)
 
-from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout, QWidget,
+from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout, QWidget, QDialog,
                          QIcon, QGridLayout, QSplitter, QFrame, QMessageBox,
                          QPushButton, QMenu, QCompleter, QPixmap)
 from PyQt4.QtCore import Qt
@@ -12,7 +12,6 @@ from PyQt4.QtCore import Qt
 from configuration import Config
 from models import Invoice, Report
 from tools.export_pdf import pdf_view
-# from tools.export_xls import write_invoice_xls
 
 from Common.ui.util import formatted_number, is_int, uopen_file, show_date
 from Common.ui.common import FWidget, FPageTitle, FLabel, LineEdit, Deleted_btt
@@ -24,11 +23,13 @@ except:
     unicode = str
 
 
-class ShowInvoiceViewWidget(FWidget):
+class ShowInvoiceViewWidget(QDialog, FWidget):
 
     def __init__(self, invoice_num, parent=0, *args, **kwargs):
-        super(ShowInvoiceViewWidget, self).__init__(
-            parent=parent, *args, **kwargs)
+        # super(ShowInvoiceViewWidget, self).__init__(
+        #     parent=parent, *args, **kwargs)
+        QDialog.__init__(self, parent, *args, **kwargs)
+
         self.invoice = Invoice.get(number=invoice_num)
         self.parentWidget().setWindowTitle(Config.NAME_ORGA +
                                            u"  CONSULTATION DE FACTURE")
@@ -75,23 +76,24 @@ class ShowInvoiceViewWidget(FWidget):
         from num2words import num2words
         table = self.table_show
         hheaders = table.hheaders[:-1]
+        data = table.data
         endrowx = len(hheaders) - 1
         dict_data = {
             'file_name': "facture.xlsx",
             'headers': hheaders,
-            'data': table.get_table_items(),
-            "extend_rows": [(3, table.montant_ht)],
+            'data': data,
+            "extend_rows": [(3, table.montant_ht), ],
             'sheet': self.title,
-            'title': self.title,
+            # 'title': self.title,
             'widths': table.stretch_columns,
             "date": self.invoice.date.strftime(u'%x'),
-            "others": [
-                (4, 4, 0, 2, "Doit: {}".format(self.invoice.client)),
-                (45, 45, 0, endrowx,
-                 "Arrêté la présente facture à la somme de : {} FCFA".format(num2words(table.montant_ht, lang="en"))),
-                (50, 50, 0, 0, "Pour acquit"),
-                (50, 50, endrowx, endrowx, "Le fournisseur")],
-            'exclude_row': len(table.data) - 2,
+            "others": [("A8", "B8", "Doit: {}".format(self.invoice.client)),
+                       ("A35", "D35", "Arrêté la présente facture à la somme de : {} FCFA".format(
+                                      num2words(table.montant_ht, lang="fr"))),
+                       # ("A50", "A50", "Pour acquit"),
+                       # ("D50", "D50", "Le fournisseur"),
+                       ],
+            'exclude_row': len(data) - 2,
         }
         export_dynamic_data(dict_data)
 
@@ -139,11 +141,11 @@ class ShowOrderTableWidget(FTableWidget):
         self.set_data_for()
         self.refresh()
 
-        pw = (self.parent.parent.page_width() / 5) - 20
-        self.setColumnWidth(0, pw)
-        self.setColumnWidth(1, pw * 2)
-        self.setColumnWidth(2, pw)
-        self.setColumnWidth(3, pw)
+        # pw = (self.parent.parent.page_width() / 5) - 20
+        # self.setColumnWidth(0, pw)
+        # self.setColumnWidth(1, pw * 2)
+        # self.setColumnWidth(2, pw)
+        # self.setColumnWidth(3, pw)
 
     def set_data_for(self):
 

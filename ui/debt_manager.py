@@ -258,12 +258,13 @@ class DebtsTableWidget(FTableWidget):
     def click_item(self, row, column, *args):
         if column != 0:
             return
+
         from ui.invoice_show import ShowInvoiceViewWidget
         try:
-            self.parent.change_main_context(ShowInvoiceViewWidget,
-                                            invoice_num=self.data[row][3])
-        except IndexError:
-            pass
+            self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
+                                    invoice_num=self.data[row][3])
+        except Exception as e:
+            print(e)
 
     def display_remaining(self, text):
         return """

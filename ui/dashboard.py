@@ -74,7 +74,7 @@ class InvoiceTableWidget(FTableWidget):
 
         self.sorter = True
         self.stretch_columns = [1, 2]
-        self.display_fixed = True
+        # self.display_fixed = True
         self.align_map = {0: 'r', 1: 'r', 2: 'l', }
         self.refresh_()
         # self.refresh_()
@@ -93,9 +93,10 @@ class InvoiceTableWidget(FTableWidget):
     def set_data_for(self, value):
         if value:
             value = str(value)
+            print(value)
             if is_int(value):
                 qs = ((Invoice.number == int(value)))
-                invoices = invoices.where(qs)
+                invoices = Invoice.select().where(qs)
             else:
                 invoices = []
                 for clt in ProviderOrClient.select().where(
@@ -106,7 +107,7 @@ class InvoiceTableWidget(FTableWidget):
             invoices = Invoice.select().order_by(Invoice.number.desc()).iterator()
 
         try:
-            self.data = [(invoice.number, show_date(invoice.date),
+            self.data = [(invoice.number, invoice.date,
                           invoice.client, "") for invoice in invoices]
         except Exception as e:
             print("Exception ", e)
@@ -127,10 +128,10 @@ class InvoiceTableWidget(FTableWidget):
 
         from ui.invoice_show import ShowInvoiceViewWidget
         try:
-            self.parent.change_main_context(ShowInvoiceViewWidget,
-                                            invoice_num=self.data[row][0])
-        except IndexError:
-            pass
+            self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
+                                    invoice_num=self.data[row][0])
+        except Exception as e:
+            print(e)
 
 
 class BuyTableWidget(FTableWidget):
@@ -152,7 +153,7 @@ class BuyTableWidget(FTableWidget):
         self.refresh()
 
     def set_data_for(self):
-        self.data = [(buy.id, show_date(buy.date), "")
+        self.data = [(buy.id, buy.date, "")
                      for buy in Buy.select()]
 
     def _item_for_data(self, row, column, data, context=None):

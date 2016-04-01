@@ -21,6 +21,7 @@ from GCommon.ui.products import ProductsViewWidget
 from ui.invoice import InvoiceViewWidget
 from ui.apricot import ApricotsViewWidget
 from ui.buy import BuyViewWidget
+from ui.providers import ProvidersViewWidget
 from ui.debt_manager import DebtsViewWidget
 
 
@@ -50,6 +51,8 @@ class MenuBar(FMenuBar, FWidget):
                  "shortcut": "Ctrl+A", "goto": BuyViewWidget},
                 {"name": u"Dettes", "admin": True, "icon": 'debt',
                  "shortcut": "Ctrl+D", "goto": DebtsViewWidget},
+                {"name": u"Clients", "admin": True, "icon": '',
+                 "shortcut": "Alt+C", "goto": ProvidersViewWidget},
                 ]
 
         # Menu aller à

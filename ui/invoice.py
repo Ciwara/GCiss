@@ -119,7 +119,6 @@ class InvoiceViewWidget(FWidget):
 
     def add_clt(self):
         from GCommon.ui.provider_client_edit_add import EditOrAddClientOrProviderDialog
-
         self.open_dialog(EditOrAddClientOrProviderDialog, modal=True,
                          prov_clt=None, table_p=self)
 
@@ -205,9 +204,12 @@ class InvoiceViewWidget(FWidget):
             return False
         else:
             self.parent.Notify("Facture Enregistrée avec succès", "success")
-
-            self.change_main_context(ShowInvoiceViewWidget,
-                                     invoice_num=invoice.number)
+            self.table_invoice._reset()
+            try:
+                self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
+                                        invoice_num=invoice.number)
+            except Exception as e:
+                print(e)
 
 
 class ResultatTableWidget(FTableWidget):
