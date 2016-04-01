@@ -67,8 +67,7 @@ class InvoiceTableWidget(FTableWidget):
 
     def __init__(self, parent):
         FTableWidget.__init__(self, parent=parent)
-        self.hheaders = [u"Facture N°", u"Date",
-                         u"Doit", u"Consulter"]
+        self.hheaders = [u"Facture N°", u"Date", u"Doit", u"Consulter"]
 
         self.parent = parent
 

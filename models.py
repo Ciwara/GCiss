@@ -337,7 +337,7 @@ class Invoice(BaseModel):
 
     @property
     def amount_ivoice(self):
-        return sum([val.selling_price for val in self.items])
+        return sum([(val.selling_price * val.qty) for val in self.items])
 
     @property
     def debts(self):
@@ -345,6 +345,7 @@ class Invoice(BaseModel):
 
     @property
     def date(self):
+        # print(self.items.first().date)
         return self.items.first().date
 
     def deletes_data(self):

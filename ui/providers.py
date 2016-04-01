@@ -8,7 +8,8 @@ from __future__ import (
 
 from datetime import datetime, date
 
-from PyQt4.QtGui import (QVBoxLayout, QGridLayout, QIcon, QMenu)
+from PyQt4.QtGui import (QVBoxLayout, QGridLayout,
+                         QIcon, QMenu, QTableWidgetItem)
 from PyQt4.QtCore import Qt, QDate
 
 from configuration import Config
@@ -38,7 +39,7 @@ class ProvidersViewWidget(FWidget):
         self.title = u"Movements"
 
         self.on_date = FormatDate(
-            QDate(date.today().year, date.today().month, 1))
+            QDate(date.today().year, 1, 1))
         self.end_date = FormatDate(QDate.currentDate())
         self.now = datetime.now().strftime("%x")
         self.soldeField = FormLabel("0 {}".format(Config.DEVISE))
@@ -94,17 +95,18 @@ class ProvidersViewWidget(FWidget):
         from Common.exports_xlsx import export_dynamic_data
         dict_data = {
             'file_name': "versements.xlsx",
-            'headers': self.table.hheaders,
+            'headers': self.table.hheaders[:-1],
             'data': self.table.data,
             "extend_rows": [(1, self.table.label_mov_tt),
                             (3, self.table.balance_tt), ],
             "footers": [
-                ("C", "E", "Solde au {} = {}".format(self.now, self.table.balance_tt)), ],
+                ("C", "D", "Solde au {} = {}".format(self.now, self.table.balance_tt)), ],
             'sheet': self.title,
             # 'title': self.title,
             'widths': self.table.stretch_columns,
+            'exclude_row': len(self.table.data) - 1,
             'format_money': ["D:D", ],
-            'others': [("A7", "C7", "Compte : {}".format(self.table.provider_clt)), ],
+            'others': [("A7", "B7", "Compte : {}".format(self.table.provider_clt)), ],
             "date": "Du {} au {}".format(
                 date_to_datetime(
                     self.on_date.text()).strftime(Config.DATEFORMAT),
@@ -125,7 +127,7 @@ class RapportTableWidget(FTableWidget):
         FTableWidget.__init__(self, parent=parent, *args, **kwargs)
 
         self.hheaders = [
-            u"Date", "Num Facture", u"Client", u"Solde", ]
+            u"Date", "Num. Facture", u"Client", u"Montant Facture", ""]
 
         # self.setContextMenuPolicy(Qt.CustomContextMenu)
         # self.customContextMenuRequested.connect(self.popup)
@@ -173,11 +175,29 @@ class RapportTableWidget(FTableWidget):
         else:
             self.provider_clt = "Tous"
 
-        # self.data = [(pay.date, pay.libelle, pay.debit, pay.credit,
-        #               pay.balance, pay.id) for pay in qs.filter(Invoice.date > date_[
-        # 0], Invoice.date < date_[1]).order_by(Invoice.number.asc())]
-        self.data = [(vl.date, vl.number, vl.client.name, vl.amount_ivoice,)
-                     for vl in qs]
+        self.data = [(vl.date, vl.number, vl.client.name, vl.amount_ivoice, "")
+                     for vl in qs if (vl.date > date_[0] and vl.date < date_[1])]
+
+    def _item_for_data(self, row, column, data, context=None):
+        if column == self.data[0].__len__() - 1:
+            return QTableWidgetItem(
+                QIcon(u"{img_media}{img}".format(img_media=Config.img_cmedia,
+                                                 img="find.png")), (u"voir"))
+
+        return super(RapportTableWidget, self)._item_for_data(row, column,
+                                                              data, context)
+
+    def click_item(self, row, column, *args):
+        last_column = self.hheaders.__len__() - 1
+        if column != last_column:
+            return
+
+        from ui.invoice_show import ShowInvoiceViewWidget
+        try:
+            self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
+                                    invoice_num=self.data[row][1])
+        except Exception as e:
+            print(e)
 
     def extend_rows(self):
         nb_rows = self.rowCount()
