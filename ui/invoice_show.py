@@ -11,7 +11,9 @@ from PyQt4.QtCore import Qt
 
 from configuration import Config
 from models import Invoice, Report
-from tools.export_pdf import pdf_view
+# from tools.export_pdf import pdf_view
+from GCommon.tools.pdf_invoice import pdf_view
+# from tools.pdf import draw_pdf
 
 from Common.ui.util import formatted_number, is_int, uopen_file, show_date
 from Common.ui.common import FWidget, FPageTitle, FLabel, LineEdit, Deleted_btt
@@ -98,6 +100,7 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
         export_dynamic_data(dict_data)
 
     def printer_pdf(self):
+        # pdf_report = draw_pdf(self.invoice)
         pdf_report = pdf_view("invoice", self.invoice)
         uopen_file(pdf_report)
 

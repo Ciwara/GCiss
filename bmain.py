@@ -34,7 +34,7 @@ def main():
     window = MainWindow()
     window.setStyleSheet(appStyle)
     setattr(FWindow, 'window', window)
-    # window.show()
+    window.show()
     window.showMaximized()
     sys.exit(app.exec_())
 

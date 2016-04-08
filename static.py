@@ -7,8 +7,6 @@ import os
 
 from Common.cstatic import CConstants
 
-ROOT_DIR = os.path.dirname(os.path.abspath('__file__'))
-
 
 class Constants(CConstants):
 
@@ -16,6 +14,8 @@ class Constants(CConstants):
         CConstants.__init__(self)
 
     # des_image_record = "static/img_prod"
+
+    ROOT_DIR = os.path.dirname(os.path.abspath('__file__'))
     ARMOIRE = "img_prod"
     des_image_record = os.path.join(ROOT_DIR, ARMOIRE)
     PEEWEE_V = 224
@@ -39,6 +39,9 @@ class Constants(CConstants):
 
     APP_VERSION = u"6.0.0"
     APP_DATE = u"02/2013"
-    img_media = os.path.join(os.path.join(ROOT_DIR, "static"), "images/")
+    img_media = os.path.join(ROOT_DIR, "static", "images/")
     APP_LOGO = os.path.join(img_media, "logo.png")
     APP_LOGO_ICO = os.path.join(img_media, "logo.ico")
+
+    INV_TEMPLATE_XLSX = os.path.join(ROOT_DIR, "templates", "t_invoice.xls")
+    INV_TEMPLATE_PDF = os.path.join(ROOT_DIR, "templates", "t_invoice.pdf")

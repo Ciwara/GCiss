@@ -6,11 +6,12 @@
 
   !define MUI_PRODUCT "GStock"
   !define MUI_FILE "bmain"
-  !define MUI_VERSION "5.4.0"
+  !define MUI_VERSION "6.0"
   !define MUI_BRANDINGTEXT "${MUI_PRODUCT} ${MUI_VERSION}"
   !define IMAGES "images"
   !define CIMAGES "cimages"
   !define MEDIA "static"
+  !define TEMPLATES "templates"
   !define CIMAGES_PATH "C:\Users\fadiga\Documents\GitHub\Common\${CIMAGES}"
   ;CRCCheck On
 
@@ -57,9 +58,10 @@ Section "install"
   File /r dist\*.*
   File /r *.dll
   File /r *.manifest
-  File /r fact_source.pdf
+  ;File /r fact_source.pdf
   File /r ${IMAGES}
   File /r ${CIMAGES_PATH}
+  File /r ${TEMPLATES}
 
 ;create desktop shortcut
   CreateShortCut "$DESKTOP\${MUI_PRODUCT}.lnk" "$INSTDIR\${MUI_FILE}.exe" parameters "$INSTDIR\${MEDIA}\${IMAGES}\${MUI_ICON}"

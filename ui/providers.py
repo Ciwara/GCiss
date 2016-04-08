@@ -16,7 +16,7 @@ from configuration import Config
 from Common.ui.common import (FormLabel, FWidget, FPeriodHolder, FPageTitle,
                               Button, BttExportXLS, FormatDate, ExtendedComboBox)
 from Common.ui.table import FTableWidget, TotalsWidget
-from Common.ui.util import formatted_number, is_int, date_to_datetime
+from Common.ui.util import device_amount, is_int, date_to_datetime
 from models import Invoice, ProviderOrClient
 from ui.payment_edit_add import EditOrAddPaymentrDialog
 
@@ -41,8 +41,8 @@ class ProvidersViewWidget(FWidget):
         self.on_date = FormatDate(
             QDate(date.today().year, 1, 1))
         self.end_date = FormatDate(QDate.currentDate())
-        self.now = datetime.now().strftime("%x")
-        self.soldeField = FormLabel("0 {}".format(Config.DEVISE))
+        # self.now = datetime.now().strftime("%x")
+        self.soldeField = FormLabel("{}".format(device_amount(0)))
         balanceBox = QGridLayout()
         balanceBox.addWidget(self.soldeField, 0, 3)
         balanceBox.setColumnStretch(0, 1)
@@ -99,25 +99,33 @@ class ProvidersViewWidget(FWidget):
             'data': self.table.data,
             "extend_rows": [(1, self.table.label_mov_tt),
                             (3, self.table.balance_tt), ],
-            "footers": [
-                ("C", "D", "Solde au {} = {}".format(self.now, self.table.balance_tt)), ],
+            # "footers": [],
             'sheet': self.title,
             # 'title': self.title,
             'widths': self.table.stretch_columns,
             'exclude_row': len(self.table.data) - 1,
             'format_money': ["D:D", ],
-            'others': [("A7", "B7", "Compte : {}".format(self.table.provider_clt)), ],
-            "date": "Du {} au {}".format(
-                date_to_datetime(
-                    self.on_date.text()).strftime(Config.DATEFORMAT),
-                date_to_datetime(
-                    self.end_date.text()).strftime(Config.DATEFORMAT))
+            'others': [("A7", "B7", "Compte : {}".format(self.table.provider_clt)),
+                       ("A8", "B8", "Du {} au {} : {}".format(
+                        date_to_datetime(self.on_date.text()).strftime(
+                            Config.DATEFORMAT),
+                        date_to_datetime(self.end_date.text()).strftime(
+                            Config.DATEFORMAT),
+                        device_amount(self.table.balance_tt))), ],
+            # "date": "Du {} au {}".format(
+            #     date_to_datetime(
+            #         self.on_date.text()).strftime(Config.DATEFORMAT),
+            #     date_to_datetime(
+            #         self.end_date.text()).strftime(Config.DATEFORMAT))
         }
         export_dynamic_data(dict_data)
 
-    def display_remaining(self, text):
-        return """ <h2>Solde au {} : <b>{}</b> {} </h2>
-               """.format(self.now,  text, Config.DEVISE)
+    def display_remaining(self, amount_text):
+        return """ <h2>Solde du {} au {} : <b>{}</b></h2>
+               """.format(date_to_datetime(
+            self.on_date.text()).strftime(Config.DATEFORMAT),
+            date_to_datetime(
+            self.end_date.text()).strftime(Config.DATEFORMAT), amount_text)
 
 
 class RapportTableWidget(FTableWidget):
@@ -148,9 +156,9 @@ class RapportTableWidget(FTableWidget):
         self.totals_debit = 0
         self.totals_credit = 0
         self.balance_tt = 0
-
-        l_date = [date_to_datetime(self.parent.on_date.text()),
-                  date_to_datetime(self.parent.end_date.text())]
+        self.d_star = date_to_datetime(self.parent.on_date.text())
+        self.d_end = date_to_datetime(self.parent.end_date.text())
+        l_date = [self.d_star, self.d_end]
         self._reset()
         self.set_data_for(l_date, provid_clt_id=provid_clt_id, search=search)
         self.refresh()
@@ -162,7 +170,7 @@ class RapportTableWidget(FTableWidget):
         self.setColumnWidth(3, pw)
 
         self.parent.soldeField.setText(
-            self.parent.display_remaining(formatted_number(self.balance_tt)))
+            self.parent.display_remaining(device_amount(self.balance_tt)))
 
         # self.hideColumn(len(self.hheaders) - 1)
 
@@ -209,4 +217,4 @@ class RapportTableWidget(FTableWidget):
         self.label_mov_tt = u"Totals "
         self.setItem(nb_rows, 2, TotalsWidget(self.label_mov_tt))
         self.setItem(
-            nb_rows, 3, TotalsWidget(formatted_number(self.balance_tt)))
+            nb_rows, 3, TotalsWidget(device_amount(self.balance_tt)))
