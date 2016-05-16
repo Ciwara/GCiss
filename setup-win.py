@@ -7,6 +7,8 @@ import sys
 import py2exe
 
 sys.path.append(os.path.abspath('../'))
+# sys.path.append(os.path.abspath('..Common'))
+# sys.path.append(os.path.abspath('..GCommon'))
 
 from configuration import Config
 
@@ -28,9 +30,9 @@ class Target(object):
         # The 'version' attribute MUST be defined, otherwise no versioninfo will be built:
         # self.version = "1.0"
 
-        self.company_name = "BaraCorp"
-        self.copyright = "Copyright BaraCorp © 2015"
-        self.legal_copyright = "Copyright BaraCorp © 2015"
+        self.company_name = "FadCorp"
+        self.copyright = "Copyright FadCorp © 2015"
+        self.legal_copyright = "Copyright FadCorp © 2015"
         self.legal_trademark = ""
         self.product_version = Config.APP_VERSION
         self.product_name = Config.APP_NAME
@@ -99,7 +101,7 @@ main_app = Target(
     # Icon resources:[(resource_id, path to .ico file), ...]
     # icon_resources=[(1, r"main_app.ico")]
 
-    other_resources=[(RT_MANIFEST, 1, (manifest_template % dict(prog="mmain", level="asInvoker")).encode("utf-8")),
+    other_resources=[(RT_MANIFEST, 1, (manifest_template % dict(prog="main", level="asInvoker")).encode("utf-8")),
                      # for bitmap resources, the first 14 bytes must be skipped when reading the file:
                      #                    (RT_BITMAP, 1, open("bitmap.bmp", "rb").read()[14:]),
                      ]
@@ -107,38 +109,35 @@ main_app = Target(
 
 
 py2exe_options = dict(
-    packages=['reportlab',
-              # 'reportlab.graphics.charts',
-              # 'reportlab.graphics.samples',
-              # 'reportlab.graphics.widgets',
-              # 'reportlab.graphics.barcode',
-              # 'reportlab.graphics',
-              # 'reportlab.lib',
-              # 'reportlab.pdfbase',
-              'reportlab.pdfgen',
-              # 'reportlab.platypus',
-              ],
-    ##    excludes = "toFspecials Tkinter".split(),
+    packages=[
+        'reportlab',
+        # 'reportlab.graphics.charts',
+        # 'reportlab.graphics.samples',
+        # 'reportlab.graphics.widgets',
+        # 'reportlab.graphics.barcode',
+        # 'reportlab.graphics',
+        # 'reportlab.lib',
+        # 'reportlab.pdfbase',
+        'reportlab.pdfgen',
+        # 'reportlab.platypus',
+    ],
+    # excludes="toFspecials Tkinter".split(),
     ##    ignores = "dotblas gnosis.xml.pickle.parsers._cexpat mx.DateTime".split(),
     # dll_excludes = "MSVCP90.dll mswsock.dll powrprof.dll".split(),
     includes=['sip', 'PyQt4'],
+    excludes=['tkinter', 'toFspecials'],
     optimize=2,
     compressed=True,  # uncompressed may or may not have a faster startup
-    bundle_files=3,
+    bundle_files=1,
     dist_dir='dist',
 )
-
-
-# Some options can be overridden by command line options...
 
 setup(name="name",
       # console based executables
       console=[main_app],
-
       # windows subsystem executables (no console)
-      windows=[{'script': Config.NAME_MAIN, \
+      windows=[{'script': Config.NAME_MAIN,
                 'icon_resources': [(0, Config.APP_LOGO_ICO)]}],
-
       # py2exe options
       zipfile=None,
       options={"py2exe": py2exe_options, },

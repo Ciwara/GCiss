@@ -112,11 +112,6 @@ class ProvidersViewWidget(FWidget):
                         date_to_datetime(self.end_date.text()).strftime(
                             Config.DATEFORMAT),
                         device_amount(self.table.balance_tt))), ],
-            # "date": "Du {} au {}".format(
-            #     date_to_datetime(
-            #         self.on_date.text()).strftime(Config.DATEFORMAT),
-            #     date_to_datetime(
-            #         self.end_date.text()).strftime(Config.DATEFORMAT))
         }
         export_dynamic_data(dict_data)
 

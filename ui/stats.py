@@ -52,7 +52,8 @@ class StatViewWidget(FWidget, FPeriodHolder):
             'file_name': "Semaine.xlsx",
             'headers': self.table_rpt.hheaders,
             'data': self.table_rpt.data,
-            "extend_rows": [(1, self.table_rpt.total_sum_d1),
+            "extend_rows": [(0, "Totaux"),
+                            (1, self.table_rpt.total_sum_d1),
                             (2, self.table_rpt.total_sum_d2),
                             (3, self.table_rpt.total_sum_d3),
                             (4, self.table_rpt.total_sum_d4),
@@ -77,7 +78,7 @@ class ReportTableWidget(FTableWidget):
         FTableWidget.__init__(self, parent=parent, *args, **kwargs)
 
         self.hheaders = ["Modeles", u"Lundi", u"Mardi", u"Mercredi",
-                         u"Jeudi", u"Vendredi", u"Samedi", u"Montant"]
+                         u"Jeudi", u"Vendredi", u"Samedi", u"Total"]
         self.parent = parent
 
         self.sorter = True
@@ -92,6 +93,16 @@ class ReportTableWidget(FTableWidget):
         self._reset()
         self.set_data_for(main_date)
         self.refresh()
+
+        pw = self.parent.parent.page_width() / 10
+        self.setColumnWidth(0, pw * 2)
+        self.setColumnWidth(1, pw)
+        self.setColumnWidth(2, pw)
+        self.setColumnWidth(3, pw)
+        self.setColumnWidth(4, pw)
+        self.setColumnWidth(5, pw)
+        self.setColumnWidth(6, pw)
+        self.setColumnWidth(7, pw)
 
     def set_data_for(self, main_date):
 
@@ -112,9 +123,9 @@ class ReportTableWidget(FTableWidget):
             Report.date >= self.date_on, Report.date <= self.date_end,
             Report.type_ == Report.S)]
 
-        products = [(prod.name) for prod in Product.select().where(
+        products_ = [(prod.name) for prod in Product.select().where(
             Product.name << products).order_by(Product.name.desc())]
-        for prod_name in products:
+        for prod_name in products_:
             on = date_on_or_end(self.date_on)
             end = date_on_or_end(self.date_end, on=False)
             dict_store = {}
@@ -165,10 +176,9 @@ class ReportTableWidget(FTableWidget):
             self.total_sum_d6 += dict_store["sum_d6"]
             reports.append(dict_store)
 
-        self.data = [(rep.get('product'), rep.get('sum_d1'),
-                      rep.get('sum_d2'), rep.get('sum_d3'), rep.get('sum_d4'),
-                      rep.get('sum_d5'), rep.get('sum_d6'),
-                      rep.get('sum_week'), "") for rep in reports]
+        self.data = [(rep.get('product'), rep.get('sum_d1'), rep.get('sum_d2'),
+                      rep.get('sum_d3'), rep.get('sum_d4'), rep.get('sum_d5'),
+                      rep.get('sum_d6'), rep.get('sum_week')) for rep in reports]
 
     def extend_rows(self):
 
@@ -191,6 +201,5 @@ class ReportTableWidget(FTableWidget):
             self.nb_rows, 6, TotalsWidget(formatted_number(self.total_sum_d6)))
 
     def _item_for_data(self, row, column, data, context=None):
-
         return super(ReportTableWidget, self)._item_for_data(row, column,
                                                              data, context)

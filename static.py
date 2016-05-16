@@ -37,7 +37,7 @@ class Constants(CConstants):
     # APP_NAME = B_GESTION
     APP_NAME = M_GESTION
 
-    APP_VERSION = u"6.0.0"
+    APP_VERSION = u"7.0.2"
     APP_DATE = u"02/2013"
     img_media = os.path.join(ROOT_DIR, "static", "images/")
     APP_LOGO = os.path.join(img_media, "logo.png")

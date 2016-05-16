@@ -77,7 +77,7 @@ class RefundEditAddDialog(QDialog, FWidget):
         formbox.addRow(FormLabel("Client :"),
                        FormLabel(self.provid_clt.name))
         formbox.addRow(FormLabel("Dette restante :"),
-                       FormLabel(str(formatted_number(self.last_remaining)) + Config.DEVISE))
+                       FormLabel(str(formatted_number(self.last_remaining))))
         formbox.addRow(FormLabel(u"Date : *"), self.refund_date_field)
         formbox.addRow(FormLabel(u"Montant : *"), self.amount_field)
 
@@ -115,6 +115,6 @@ class RefundEditAddDialog(QDialog, FWidget):
             self.close()
             self.parent.Notify(u"le {type} {lib} à été enregistré avec succès".format(
                 type=self.type_, lib=amount), "success")
-            self.table_p.refresh_(self.provid_clt.id)
+            self.table_p.refresh_(provid_clt_id=self.provid_clt.id)
         except Exception as e:
             self.parent.Notify(e, "error")

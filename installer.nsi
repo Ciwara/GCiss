@@ -1,4 +1,4 @@
-﻿; Turn off old selected section
+﻿# Turn off old selected section
 ; 26 06 2015: Fadiga Ibrahima
 
 ; -------------------------------
@@ -6,7 +6,7 @@
 
   !define MUI_PRODUCT "GStock"
   !define MUI_FILE "bmain"
-  !define MUI_VERSION "6.0"
+  !define MUI_VERSION "8.0"
   !define MUI_BRANDINGTEXT "${MUI_PRODUCT} ${MUI_VERSION}"
   !define IMAGES "images"
   !define CIMAGES "cimages"
@@ -29,7 +29,6 @@
   !define MUI_ICON "logo.ico"
   !define MUI_UNICON "logo.ico"
   !define MUI_SPECIALBITMAP "Bitmap.bmp"
-
 
 ;--------------------------------
 ;Folder selection page
@@ -56,8 +55,8 @@ Section "install"
 
   ; List of files/folders to copy
   File /r dist\*.*
-  File /r *.dll
-  File /r *.manifest
+  File ressources\*.dll
+  ;File /r *.manifest
   ;File /r fact_source.pdf
   File /r ${IMAGES}
   File /r ${CIMAGES_PATH}
@@ -93,17 +92,19 @@ Section "Uninstall"
 # now delete installed file
 delete $INSTDIR\*.exe
 delete $INSTDIR\*.dll
-delete $INSTDIR\*.manifest
+;delete $INSTDIR\*.manifest
 delete $INSTDIR\*.lib
 delete $INSTDIR\*.zip
 delete $INSTDIR\*.pdf
 delete $INSTDIR\*.pyd
+delete $INSTDIR\*.xlsx
 
 RMDir /r $INSTDIR\build
 RMDir /r $INSTDIR\${MEDIA}
 RMDir /r $INSTDIR\${CIMAGES}
 RMDir /r $INSTDIR\dist
 RMDir /r $INSTDIR\tcl
+RMDir /r $INSTDIR\${TEMPLATES}
 
 ;Delete Start Menu Shortcuts
   Delete "$DESKTOP\${MUI_PRODUCT}.lnk"
@@ -121,7 +122,7 @@ Function .onInstSuccess
   ;MessageBox MB_OK "Vous avez installé le ${MUI_PRODUCT}.Utilise son icon sur le ;bureau pour lancer le program."
 
    SetOutPath $INSTDIR
-   ExecShell "" '"$INSTDIR\bmain.exe"'
+   ExecShell "" '"$INSTDIR\${MUI_FILE}.exe"'
 FunctionEnd
 
 Function un.onUninstSuccess

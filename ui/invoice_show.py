@@ -88,14 +88,16 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
             'sheet': self.title,
             # 'title': self.title,
             'widths': table.stretch_columns,
-            "date": self.invoice.date.strftime(u'%x'),
-            "others": [("A8", "B8", "Doit: {}".format(self.invoice.client)),
-                       ("A35", "D35", "Arrêté la présente facture à la somme de : {} FCFA".format(
-                                      num2words(table.montant_ht, lang="fr"))),
-                       # ("A50", "A50", "Pour acquit"),
-                       # ("D50", "D50", "Le fournisseur"),
-                       ],
-            'exclude_row': len(data) - 2,
+            "date": show_date(self.invoice.date),
+            "others": [
+                ("A7", "B7", "FACTURE N° : {}".format(self.invoice.number)),
+                ("A8", "B8", "Doit: {}".format(self.invoice.client.name)),
+                ("A35", "D35", "Arrêté la présente facture à la somme de : {} FCFA".format(
+                    num2words(table.montant_ht, lang="fr"))),
+                ("A38", "B38", "Pour acquit"),
+                ("C38", "D38", "Le fournisseur"),
+            ],
+            # 'exclude_row': len(data) - 2,
         }
         export_dynamic_data(dict_data)
 
