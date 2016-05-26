@@ -15,7 +15,7 @@ from Common.ui.util import (check_is_empty, check_field, is_int, field_error,
 from Common.ui.table import FTableWidget, TotalsWidget
 from Common.ui.common import (FWidget, FBoxTitle, IntLineEdit, LineEdit, FLabel,
                               FormatDate, ErrorLabel, BttSmall, ExtendedComboBox)
-from Common.peewee import fn
+from peewee import fn
 
 from GCommon.ui._product_detail import InfoTableWidget
 from ui.invoice_show import ShowInvoiceViewWidget
@@ -36,9 +36,9 @@ class InvoiceViewWidget(FWidget):
             Config.APP_NAME + u"      Ventes")
         self.parent = parent
 
-        vbox = QVBoxLayout(self)
+        vbox = QVBoxLayout()
         # hbox = QHBoxLayout(self)
-        editbox = QGridLayout(self)
+        editbox = QGridLayout()
         try:
             next_number = int(
                 Invoice.select().order_by(Invoice.number.desc()).get().number) + 1
@@ -139,6 +139,9 @@ class InvoiceViewWidget(FWidget):
             return False
         return True
 
+    def refresh_(self):
+        pass
+
     def save_b(self):
         ''' add operation '''
         # entete de la facture
@@ -207,7 +210,7 @@ class InvoiceViewWidget(FWidget):
             self.table_invoice._reset()
             try:
                 self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
-                                        invoice_num=invoice.number)
+                                        table_p=self,  invoice_num=invoice.number)
             except Exception as e:
                 print(e)
 

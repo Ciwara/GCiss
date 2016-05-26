@@ -27,7 +27,7 @@ except:
 
 class ShowInvoiceViewWidget(QDialog, FWidget):
 
-    def __init__(self, invoice_num, parent=0, *args, **kwargs):
+    def __init__(self, table_p, invoice_num, parent=0, *args, **kwargs):
         # super(ShowInvoiceViewWidget, self).__init__(
         #     parent=parent, *args, **kwargs)
         QDialog.__init__(self, parent, *args, **kwargs)
@@ -37,6 +37,7 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
                                            u"  CONSULTATION DE FACTURE")
 
         self.parent = parent
+        self.table_p = table_p
 
         vbox = QVBoxLayout()
         self.title = self.invoice.type_
@@ -114,9 +115,9 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
                                      QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            from ui.dashboard import DashbordViewWidget
             self.invoice.deletes_data()
-            self.change_main_context(DashbordViewWidget)
+            self.close()
+            self.table_p.refresh_()
 
 
 class ShowOrderTableWidget(FTableWidget):

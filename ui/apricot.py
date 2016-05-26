@@ -13,7 +13,7 @@ from PyQt4.QtGui import QIcon, QVBoxLayout, QGridLayout, QFont
 from models import Report, Refund
 from configuration import Config
 
-from Common.peewee import fn
+from peewee import fn
 from Common.ui.common import FWidget, FPageTitle, FormatDate, BttExportXLS
 from Common.ui.util import formatted_number, date_on_or_end, is_int
 from Common.ui.table import FTableWidget, TotalsWidget

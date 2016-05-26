@@ -108,15 +108,15 @@ class HomeViewWidget(FWidget):
     def createErroMsGroupBox(self):
         self.chow_ms_err = QGroupBox()
 
-        ms_err = PyTextViewer(u"<h3>Vous n'avez pas le droit d'utiliser ce \
-                              logiciel sur cette machine, veuillez me contacté \
-                              </h3> <ul><li><b>Tel:</b> {phone}</li>\
-                              <li><b>{adress}</b></li><li><b>E-mail:</b> \
-                              {email}</li></ul></br></br>{mac} \
-                              ".format(email=Config.EMAIL_AUT,
-                                       adress=Config.ADRESS_AUT,
-                                       phone=Config.TEL_AUT,
-                                       mac=get_mac().replace(":", ":")))
+        ms_err = PyTextViewer("""<h3>Vous n'avez pas le droit d'utiliser ce
+                               logiciel sur cette machine, veuillez me contacté
+                               </h3> <ul><li><b>Tel:</b> {phone}</li>
+                               <li><b>{adress}</b></li><li><b>E-mail:</b>
+                               {email}</li></ul></br></br>{mac}
+                              """.format(email=Config.EMAIL_AUT,
+                                         adress=Config.ADRESS_AUT,
+                                         phone=Config.TEL_AUT,
+                                         mac=get_mac()))
 
         gridbox = QGridLayout()
         gridbox.addWidget(FPageTitle(_("Erreur de permission")), 0, 2)

@@ -128,7 +128,7 @@ class InvoiceTableWidget(FTableWidget):
         from ui.invoice_show import ShowInvoiceViewWidget
         try:
             self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
-                                    invoice_num=self.data[row][0])
+                                    table_p=self, invoice_num=self.data[row][0])
         except Exception as e:
             print(e)
 
@@ -168,15 +168,10 @@ class BuyTableWidget(FTableWidget):
         last_column = self.hheaders.__len__() - 1
         if column != last_column:
             return
-        # try:
-        #     self.parent.change_main_context(
-        #         BuyShowViewWidget, buy=Buy.get(id=self.data[row][0]))
-        # except IndexError:
-        #     pass
 
         from ui.buy_show import BuyShowViewWidget
         try:
             self.parent.open_dialog(BuyShowViewWidget, modal=True, opacity=100,
-                                    buy=Buy.get(id=self.data[row][0]))
+                                    table_p=self, buy=Buy.get(id=self.data[row][0]))
         except Exception as e:
             print(e)

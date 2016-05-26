@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # maintainer: Fad
-from Common import peewee
+import peewee
 from datetime import datetime, timedelta
 from PyQt4 import QtGui, QtCore
 
 from configuration import Config
-from Common.peewee import fn
+from peewee import fn
 from Common.ui.common import FWidget, FPeriodHolder, FPageTitle, BttExportXLS
 from models import Report, Store, Product
 from Common.ui.table import FTableWidget, TotalsWidget

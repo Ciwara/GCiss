@@ -8,8 +8,8 @@ from __future__ import (
 
 from datetime import datetime
 
-from Common.peewee import (DateTimeField, CharField, IntegerField, BooleanField,
-                           ForeignKeyField, TextField)
+from peewee import (DateTimeField, CharField, IntegerField, BooleanField,
+                    ForeignKeyField, TextField)
 from GCommon.models import (BaseModel, SettingsAdmin, Version, FileJoin,
                             Organization, Owner, Category, Store)
 
@@ -33,7 +33,7 @@ class Store(Store):
 
         try:
             return Report.select().where(Report.store == self)
-        except Common.peewee.ReportDoesNotExist as e:
+        except peewee.ReportDoesNotExist as e:
             print("get_reports ", e)
 
     def get_report_or_none(self):
@@ -345,15 +345,24 @@ class Invoice(BaseModel):
 
     @property
     def date(self):
-        # print(self.items.first().date)
-        return self.items.first().date
+        # print(self.number)
+        try:
+            # print('DATE ', self.items.first().date)
+            return self.items.first().date
+        except Exception as e:
+            print(e, "  ", self.number)
+            return NOW
 
     def deletes_data(self):
+        print("deletes data")
         for rep in self.items:
+            print("d rep ", self.items)
             rep.deletes_data()
         for debt in self.debts:
+            print("d debt ", self.debts)
             debt.deletes_data()
         self.delete_instance()
+        print('Done d invoice')
 
     def display_name(self):
         return u"Facture N: {num} de {client} au {date}".format(num=self.number,

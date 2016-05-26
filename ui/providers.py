@@ -198,7 +198,7 @@ class RapportTableWidget(FTableWidget):
         from ui.invoice_show import ShowInvoiceViewWidget
         try:
             self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
-                                    invoice_num=self.data[row][1])
+                                    table_p=self, invoice_num=self.data[row][1])
         except Exception as e:
             print(e)
 

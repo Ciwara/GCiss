@@ -17,7 +17,7 @@ from Common.ui.util import (
 from Common.ui.common import (
     FWidget, FPageTitle, Button_save, FormLabel, FLabel, LineEdit, IntLineEdit,
     Warning_btt, FormatDate)
-from Common import peewee
+import peewee
 from models import Refund
 
 

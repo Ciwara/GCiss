@@ -30,14 +30,10 @@ class Constants(CConstants):
 
     NAME_MAIN = "bmain.py"
     M_GESTION = u"Gestion de Stock"
-    B_GESTION = "Gestion de Boutique"
-    P_GESTION = u"Gestion d'achat"
     pdf_source = "pdf_source.pdf"
-    # APP_NAME = P_GESTION
-    # APP_NAME = B_GESTION
     APP_NAME = M_GESTION
 
-    APP_VERSION = u"7.0.2"
+    APP_VERSION = u"8.0.2"
     APP_DATE = u"02/2013"
     img_media = os.path.join(ROOT_DIR, "static", "images/")
     APP_LOGO = os.path.join(img_media, "logo.png")

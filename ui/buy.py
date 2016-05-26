@@ -38,8 +38,8 @@ class BuyViewWidget(FWidget):
             Config.APP_NAME + u"    Arrivage d'article")
         self.parent = parent
 
-        vbox = QVBoxLayout(self)
-        hbox = QHBoxLayout(self)
+        vbox = QVBoxLayout()
+        hbox = QHBoxLayout()
         editbox = QGridLayout()
 
         self.date = FormatDate(QDate.currentDate())

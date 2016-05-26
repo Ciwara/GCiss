@@ -8,7 +8,7 @@ from PyQt4.QtGui import (QSplitter, QHBoxLayout, QVBoxLayout, QPushButton,
                          QListWidgetItem, QIcon, QFormLayout, QGridLayout)
 from PyQt4.QtCore import Qt, SIGNAL, SLOT, QSize
 
-from Common.peewee import fn
+from peewee import fn
 from models import ProviderOrClient, Invoice, Refund
 
 from Common.ui.common import FWidget, FBoxTitle, Button, LineEdit, FLabel
@@ -262,7 +262,7 @@ class DebtsTableWidget(FTableWidget):
         from ui.invoice_show import ShowInvoiceViewWidget
         try:
             self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
-                                    invoice_num=self.data[row][3])
+                                    table_p=self, invoice_num=self.data[row][3])
         except Exception as e:
             print(e)
 

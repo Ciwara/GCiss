@@ -21,17 +21,18 @@ from data_helper import check_befor_update_data
 
 class BuyShowViewWidget(QDialog, FWidget):
 
-    def __init__(self, buy="", parent=0, *args, **kwargs):
+    def __init__(self, table_p, buy="", parent=0, *args, **kwargs):
         # super(BuyShowViewWidget, self).__init__(parent=parent,
         #                                         *args, **kwargs)
         QDialog.__init__(self, parent, *args, **kwargs)
-        self.buy = buy
-
         self.parentWidget().setWindowTitle(Config.APP_NAME +
                                            u"  CONSULTATION DES ACHAT")
 
         self.parent = parent
+        self.buy = buy
+        self.table_p = table_p
         self.title = "Arivage"
+
         vbox = QVBoxLayout()
         vbox.addWidget(FPageTitle(self.title))
 
@@ -89,9 +90,9 @@ class BuyShowViewWidget(QDialog, FWidget):
                                          QMessageBox.No)
 
             if reply == QMessageBox.Yes:
-                from ui.dashboard import DashbordViewWidget
                 buy.deletes_data()
-                self.change_main_context(DashbordViewWidget)
+                self.close()
+                self.table_p.refresh_()
         else:
             QMessageBox.about(self, u"Alerte",
                               u"""<h3>Vous ne pousez pas supprimer ce rapport car:</h3>

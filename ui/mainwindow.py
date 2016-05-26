@@ -33,10 +33,7 @@ class MainWindow(FMainWindow):
         self.statusbar = GStatusBar(self)
         self.setStatusBar(self.statusbar)
 
-        if Config.APP_NAME == Config.P_GESTION:
-            self.page = PriceViewWidget
-        else:
-            self.page = DashbordViewWidget
+        self.page = DashbordViewWidget
 
         self.change_context(self.page)
 

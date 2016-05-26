@@ -8,9 +8,9 @@ from __future__ import (
 
 import os
 import sys
-import locale
-import gettext
-import gettext_windows
+# import locale
+# import gettext
+# import gettext_windows
 sys.path.append(os.path.abspath('../'))
 
 from PyQt4.QtGui import QApplication
@@ -26,11 +26,10 @@ app = QApplication(sys.argv)
 
 
 def main():
-    """  """
-    gettext_windows.setup_env()
-    locale.setlocale(locale.LC_ALL, '')
-    # gettext.install('bmain', localedir='locale', unicode=True)
-    gettext.install('bmain.py', localedir='locale')
+    # """  """
+    # gettext_windows.setup_env()
+    # locale.setlocale(locale.LC_ALL, '')
+    # gettext.install('bmain.py', localedir='locale')
     window = MainWindow()
     window.setStyleSheet(appStyle)
     setattr(FWindow, 'window', window)
