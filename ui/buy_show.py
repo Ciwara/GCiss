@@ -39,7 +39,7 @@ class BuyShowViewWidget(QDialog, FWidget):
         self.table_show = ShowBuyTableWidget(parent=self)
 
         editbox = QGridLayout()
-        self.btt_export = BttExportXLS(u"Exporter")
+        self.btt_export = BttExportXLS("")
         self.btt_export.clicked.connect(self.export_xls)
         self.button_dl = Deleted_btt(u"Annuler la facture")
         self.button_dl.released.connect(self.cancellation)
@@ -60,7 +60,7 @@ class BuyShowViewWidget(QDialog, FWidget):
         table = self.table_show
         hheaders = table.hheaders[:-1]
         dict_data = {
-            'file_name': "arivage.xlsx",
+            'file_name': "arivage",
             'headers': hheaders,
             'data': table.data,
             "extend_rows": [(4, table.v_amount_tt),
@@ -71,7 +71,7 @@ class BuyShowViewWidget(QDialog, FWidget):
             'format_money': ["C:C", "D:D", "E:E", "F:F", "G:G"],
             'widths': table.stretch_columns,
             "date": self.buy.date.strftime(u'%x'),
-            'exclude_row':  len(table.data) - 2,
+            'exclude_row': len(table.data) - 2,
         }
         export_dynamic_data(dict_data)
 
@@ -94,11 +94,10 @@ class BuyShowViewWidget(QDialog, FWidget):
                 self.close()
                 self.table_p.refresh_()
         else:
-            QMessageBox.about(self, u"Alerte",
-                              u"""<h3>Vous ne pousez pas supprimer ce rapport car:</h3>
-                              <b>%(prod_name)s </b> aura comme restant : %(remaining)s
-                              Après la suppression</li></ul>"""
-                              % {"prod_name": rpt.product.name, "remaining": remaining})
+            QMessageBox.about(
+                self, u"Alerte", u"""
+                <h3>Vous ne pousez pas supprimer ce rapport car:</h3> <b>%(prod_name)s </b> aura comme restant : %(remaining)s Après la suppression</li></ul>"""
+                % {"prod_name": rpt.product.name, "remaining": remaining})
 
 
 class ShowBuyTableWidget(FTableWidget):

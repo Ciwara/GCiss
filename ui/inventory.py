@@ -69,7 +69,7 @@ class InventoryViewWidget(FWidget):
         table = self.invent_table
         hheaders = table.hheaders
         dict_data = {
-            'file_name': "Inventaire.xlsx",
+            'file_name': "Inventaire",
             'headers': hheaders,
             'data': table.data,
             "extend_rows": [(3, table.sum_totals), ],

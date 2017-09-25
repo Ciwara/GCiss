@@ -5,7 +5,7 @@
 from __future__ import (unicode_literals, absolute_import, division,
                         print_function)
 
-from Common.models import SettingsAdmin, Version, FileJoin, Organization, Owner
+from Common.models import migrator, dbh, SettingsAdmin, Version, FileJoin, Organization, Owner
 from models import (Store, Product, Report, Category, Invoice, Buy, Payment,
                     Refund, ProviderOrClient)
 
@@ -24,7 +24,14 @@ def setup(drop_tables=False):
             did_create = True
 
     if did_create:
-        from fixture import fixt_init
-        fixt_init().creat_all_or_pass()
+        from fixture import FixtInit
+        FixtInit().create_all_or_pass()
 
 setup()
+
+# with dbh.transaction():
+
+#     migrate(
+#         migrator.rename_column('story', 'pub_date', 'publish_date'),
+#         migrator.rename_column('story', 'mod_date', 'modified_date'),
+#     )

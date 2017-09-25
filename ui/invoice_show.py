@@ -11,12 +11,11 @@ from PyQt4.QtCore import Qt
 
 from configuration import Config
 from models import Invoice, Report
-# from tools.export_pdf import pdf_view
 from GCommon.tools.pdf_invoice import pdf_view
 # from tools.pdf import draw_pdf
 
 from Common.ui.util import formatted_number, is_int, uopen_file, show_date
-from Common.ui.common import FWidget, FPageTitle, FLabel, LineEdit, Deleted_btt
+from Common.ui.common import FWidget, FLabel, Deleted_btt
 from Common.ui.table import FTableWidget, TotalsWidget
 
 try:
@@ -33,8 +32,8 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
         QDialog.__init__(self, parent, *args, **kwargs)
 
         self.invoice = Invoice.get(number=invoice_num)
-        self.parentWidget().setWindowTitle(Config.NAME_ORGA +
-                                           u"  CONSULTATION DE FACTURE")
+        self.parentWidget().setWindowTitle(
+            "{} {}".format(Config.APP_NAME, "CONSULTATION DE FACTURE"))
 
         self.parent = parent
         self.table_p = table_p
@@ -62,8 +61,8 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
 
         editbox.addWidget(FLabel(u"{typ} N°: {num}".format(
             num=self.invoice.number, typ=self.invoice.type_)), 0, 0)
-        editbox.addWidget(FLabel(u"%s le %s" % (self.invoice.location,
-                                                show_date(self.invoice.date))), 1, 4)
+        editbox.addWidget(FLabel(u"%s le %s" % (
+            self.invoice.location, show_date(self.invoice.date))), 1, 4)
         editbox.addWidget(FLabel(u"Doit: %s " % self.invoice.client), 1, 0)
         editbox.addWidget(self.button_pdf, 1, 5)
         editbox.addWidget(self.button_dl, 0, 4)
@@ -82,7 +81,7 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
         data = table.data
         endrowx = len(hheaders) - 1
         dict_data = {
-            'file_name': "facture.xlsx",
+            'file_name': "facture n {}".format(self.invoice.number),
             'headers': hheaders,
             'data': data,
             "extend_rows": [(3, table.montant_ht), ],

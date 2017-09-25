@@ -25,7 +25,8 @@ class Config(Constants):
 
     try:
         DB_VERS = Version().get(Version.number == 1)
-    except:
+    except Exception as e:
+        print(e)
         DB_VERS = 1
     try:
         sttg = Organization().get(Organization.id == 1)

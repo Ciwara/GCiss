@@ -13,16 +13,16 @@ from configuration import Config
 
 def warning_of_prod():
     """"""
-    l = []
+    list_w = []
     for store in Store.all():
         for prod in Product.all():
             report = last_report_store_prod(store.name, prod.name)
             try:
                 if report.remaining < Config.nb_warning:
-                    l.append(report)
+                    list_w.append(report)
             except AttributeError:
                 pass
-    return l
+    return list_w
 
 
 def check_befor_update_data(reports):

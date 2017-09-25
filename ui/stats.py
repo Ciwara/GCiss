@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 # maintainer: Fad
 import peewee
-from datetime import datetime, timedelta
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 
+from datetime import timedelta
 from configuration import Config
 from peewee import fn
-from Common.ui.common import FWidget, FPeriodHolder, FPageTitle, BttExportXLS
-from models import Report, Store, Product
+from Common.ui.common import FWidget, FPeriodHolder, FPageTitle, BttExportXLSX
+from models import Report, Product
 from Common.ui.table import FTableWidget, TotalsWidget
 from Common.ui.util import formatted_number, date_on_or_end
 
@@ -21,14 +21,15 @@ class StatViewWidget(FWidget, FPeriodHolder):
             parent=parent, *args, **kwargs)
         FPeriodHolder.__init__(self, *args, **kwargs)
 
-        self.title = u"     Les Activités"
-        self.parentWidget().setWindowTitle(Config.NAME_ORGA + self.title)
+        self.title = "Les Activités"
+        self.parentWidget().setWindowTitle(
+            "{} {}".format(Config.APP_NAME, self.title))
         self.parent = parent
 
         self.table_rpt = ReportTableWidget(
             parent=self, main_date=self.main_date)
 
-        self.btt_export = BttExportXLS(u"Exporter")
+        self.btt_export = BttExportXLSX(u"Exporter")
         self.btt_export.clicked.connect(self.export_xls)
 
         gridbox = QtGui.QGridLayout()
@@ -49,7 +50,7 @@ class StatViewWidget(FWidget, FPeriodHolder):
         from Common.exports_xlsx import export_dynamic_data
 
         dict_data = {
-            'file_name': "Semaine.xlsx",
+            'file_name': "Semaine",
             'headers': self.table_rpt.hheaders,
             'data': self.table_rpt.data,
             "extend_rows": [(0, "Totaux"),
@@ -63,7 +64,8 @@ class StatViewWidget(FWidget, FPeriodHolder):
             'sheet': self.title,
             'title': self.title,
             'widths': self.table_rpt.stretch_columns,
-            "date": self.table_rpt.date_on.strftime(u"%x") + " au " + self.table_rpt.date_end.strftime(u"%x")
+            "date": self.table_rpt.date_on.strftime(
+                u"%x") + " au " + self.table_rpt.date_end.strftime(u"%x")
         }
         export_dynamic_data(dict_data)
 
@@ -135,50 +137,51 @@ class ReportTableWidget(FTableWidget):
             dict_store["product"] = prod_name
 
             dict_store["sum_week"] = repts.select(
-                peewee.fn.SUM(Report.qty)).where(Report.date >= on,
-                                                 Report.date <= end).scalar() or 0
+                peewee.fn.SUM(Report.qty)).where(
+                Report.date >= on, Report.date <= end).scalar() or 0
 
             self.totals += (dict_store["sum_week"])
             end = on + timedelta(days=1, seconds=-1)
             dict_store["sum_d1"] = repts.select(
-                peewee.fn.SUM(Report.qty)).where(Report.date >= on,
-                                                 Report.date <= end).scalar() or 0
+                peewee.fn.SUM(Report.qty)).where(
+                Report.date >= on, Report.date <= end).scalar() or 0
             self.total_sum_d1 += dict_store["sum_d1"]
             on += timedelta(1)
             end = on + timedelta(days=1, seconds=-1)
             dict_store["sum_d2"] = repts.select(
-                peewee.fn.SUM(Report.qty)).where(Report.date >= on,
-                                                 Report.date <= end).scalar() or 0
+                peewee.fn.SUM(Report.qty)).where(
+                Report.date >= on, Report.date <= end).scalar() or 0
             self.total_sum_d2 += dict_store["sum_d2"]
             on += timedelta(1)
             end = on + timedelta(days=1, seconds=-1)
             dict_store["sum_d3"] = repts.select(
-                peewee.fn.SUM(Report.qty)).where(Report.date >= on,
-                                                 Report.date <= end).scalar() or 0
+                peewee.fn.SUM(Report.qty)).where(
+                Report.date >= on, Report.date <= end).scalar() or 0
             self.total_sum_d3 += dict_store["sum_d3"]
             on += timedelta(1)
             end = on + timedelta(days=1, seconds=-1)
             dict_store["sum_d4"] = repts.select(
-                peewee.fn.SUM(Report.qty)).where(Report.date >= on,
-                                                 Report.date <= end).scalar() or 0
+                peewee.fn.SUM(Report.qty)).where(
+                Report.date >= on, Report.date <= end).scalar() or 0
             self.total_sum_d4 += dict_store["sum_d4"]
             on += timedelta(1)
             end = on + timedelta(days=1, seconds=-1)
             dict_store["sum_d5"] = repts.select(
-                peewee.fn.SUM(Report.qty)).where(Report.date >= on,
-                                                 Report.date <= end).scalar() or 0
+                peewee.fn.SUM(Report.qty)).where(
+                Report.date >= on, Report.date <= end).scalar() or 0
             self.total_sum_d5 += dict_store["sum_d5"]
             on += timedelta(1)
             end = on + timedelta(days=1, seconds=-1)
             dict_store["sum_d6"] = repts.select(
-                peewee.fn.SUM(Report.qty)).where(Report.date >= on,
-                                                 Report.date <= end).scalar() or 0
+                peewee.fn.SUM(Report.qty)).where(
+                Report.date >= on, Report.date <= end).scalar() or 0
             self.total_sum_d6 += dict_store["sum_d6"]
             reports.append(dict_store)
 
-        self.data = [(rep.get('product'), rep.get('sum_d1'), rep.get('sum_d2'),
-                      rep.get('sum_d3'), rep.get('sum_d4'), rep.get('sum_d5'),
-                      rep.get('sum_d6'), rep.get('sum_week')) for rep in reports]
+        self.data = [(
+            rep.get('product'), rep.get('sum_d1'), rep.get('sum_d2'),
+            rep.get('sum_d3'), rep.get('sum_d4'), rep.get('sum_d5'),
+            rep.get('sum_d6'), rep.get('sum_week')) for rep in reports]
 
     def extend_rows(self):
 

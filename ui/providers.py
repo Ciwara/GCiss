@@ -14,7 +14,7 @@ from PyQt4.QtCore import Qt, QDate
 
 from configuration import Config
 from Common.ui.common import (FormLabel, FWidget, FPeriodHolder, FPageTitle,
-                              Button, BttExportXLS, FormatDate, ExtendedComboBox)
+                              Button, BttExportXLSX, FormatDate, ExtendedComboBox)
 from Common.ui.table import FTableWidget, TotalsWidget
 from Common.ui.util import device_amount, is_int, date_to_datetime
 from models import Invoice, ProviderOrClient
@@ -61,7 +61,7 @@ class ProvidersViewWidget(FWidget):
         self.button = Button(u"Ok")
         self.button.clicked.connect(self.refresh_prov_clt)
 
-        self.btt_export = BttExportXLS(u"Exporter")
+        self.btt_export = BttExportXLSX(u"Exporter")
         self.btt_export.clicked.connect(self.export_xls)
 
         editbox = QGridLayout()
@@ -94,7 +94,7 @@ class ProvidersViewWidget(FWidget):
     def export_xls(self):
         from Common.exports_xlsx import export_dynamic_data
         dict_data = {
-            'file_name': "versements.xlsx",
+            'file_name': "versements",
             'headers': self.table.hheaders[:-1],
             'data': self.table.data,
             "extend_rows": [(1, self.table.label_mov_tt),

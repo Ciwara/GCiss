@@ -60,7 +60,7 @@ class ApricotsViewWidget(FWidget):
     def export_xls(self):
         from Common.exports_xlsx import export_dynamic_data
         dict_data = {
-            'file_name': "caise.xlsx",
+            'file_name': "caise",
             'headers': self.table_op.hheaders,
             'data': self.table_op.get_table_items(),
             "extend_rows": [(3, self.table_op.amount_ht), ],

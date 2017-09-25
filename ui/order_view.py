@@ -14,9 +14,9 @@ from configuration import Config
 from models import Product
 
 from Common.ui.table import FTableWidget
-from Common.ui.util import raise_success, raise_error, date_to_datetime
+from Common.ui.util import date_to_datetime
 from Common.ui.common import (FWidget, FPageTitle, FormLabel, BttExportXLS,
-                              IntLineEdit, Button_save, FormatDate, Deleted_btt)
+                              IntLineEdit, FormatDate, Deleted_btt)
 
 from ui.order_remove_save import OrderRemoveWidget
 
@@ -30,7 +30,8 @@ class OrderViewWidget(FWidget):
         super(OrderViewWidget, self).__init__(parent=parent, *args, **kwargs)
 
         self.order_table = OrederTableWidget(parent=self)
-        self.parentWidget().setWindowTitle(Config.NAME_ORGA + u"    COMMANDE")
+        self.parentWidget().setWindowTitle(
+            "{} {}".format(Config.APP_NAME, "COMMANDE"))
 
         self.title = FPageTitle(u"Faire une Commande")
 
