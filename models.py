@@ -10,8 +10,9 @@ from datetime import datetime
 
 from peewee import (DateTimeField, CharField, IntegerField, BooleanField,
                     ForeignKeyField, TextField)
-from GCommon.models import (BaseModel, SettingsAdmin, Version, FileJoin,
-                            Organization, Owner, Category, Store)
+
+from Common.models import Owner, BaseModel, FileJoin
+from GCommon.models import (Category, Store)
 
 FDATE = u"%c"
 NOW = datetime.now()

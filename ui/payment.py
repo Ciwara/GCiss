@@ -13,7 +13,7 @@ from PyQt4.QtCore import Qt, QDate
 
 from configuration import Config
 from Common.ui.common import (FormLabel, FWidget, FPeriodHolder, FPageTitle,
-                              Button, BttExportXLS, FormatDate)
+                              Button, BttExportXLSX, FormatDate)
 from Common.ui.table import FTableWidget, TotalsWidget
 from Common.ui.util import formatted_number, is_int, date_to_datetime
 from models import Payment
@@ -55,7 +55,7 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
         self.button = Button(u"Ok")
         self.button.clicked.connect(self.table.refresh_)
 
-        self.btt_export = BttExportXLS(u"Exporter")
+        self.btt_export = BttExportXLSX(u"Exporter")
         self.btt_export.clicked.connect(self.export_xls)
         self.add_btt = Button("Créditer")
         self.add_btt.setIcon(QIcon(u"{img_media}{img}".format(img_media=Config.img_media,

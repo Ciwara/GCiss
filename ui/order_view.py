@@ -15,7 +15,7 @@ from models import Product
 
 from Common.ui.table import FTableWidget
 from Common.ui.util import date_to_datetime
-from Common.ui.common import (FWidget, FPageTitle, FormLabel, BttExportXLS,
+from Common.ui.common import (FWidget, FPageTitle, FormLabel, BttExportXLSX,
                               IntLineEdit, FormatDate, Deleted_btt)
 
 from ui.order_remove_save import OrderRemoveWidget
@@ -38,7 +38,7 @@ class OrderViewWidget(FWidget):
         self.com_date = FormatDate(QDate.currentDate())
         vbox = QVBoxLayout()
 
-        self.export_xls_btt = BttExportXLS(u"Exporter")
+        self.export_xls_btt = BttExportXLSX(u"Exporter")
         self.connect(self.export_xls_btt, SIGNAL('clicked()'),
                      self.export_xls_order)
 

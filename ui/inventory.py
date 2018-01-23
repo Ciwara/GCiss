@@ -13,7 +13,7 @@ from PyQt4.QtCore import QDate, Qt
 from configuration import Config
 from database import Report, Product
 
-from Common.ui.common import (FWidget, FPageTitle, FormLabel, BttExportXLS,
+from Common.ui.common import (FWidget, FPageTitle, FormLabel, BttExportXLSX,
                               Button, FormatDate, IntLineEdit)
 from Common.ui.table import FTableWidget, TotalsWidget
 from Common.ui.util import formatted_number, is_int, date_to_datetime
@@ -36,7 +36,7 @@ class InventoryViewWidget(FWidget):
         self.end_date = FormatDate(QDate.currentDate())
         self.button = Button(u"Ok")
         self.button.clicked.connect(self.rapport_filter)
-        self.btt_export = BttExportXLS(u"Exporter")
+        self.btt_export = BttExportXLSX(u"Exporter")
         self.btt_export.clicked.connect(self.export_xls)
 
         self.invent_table = InventaireTableWidget(parent=self)

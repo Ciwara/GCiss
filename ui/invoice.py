@@ -10,7 +10,7 @@ from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout, QComboBox,
                          QIcon, QGridLayout, QSplitter, QFrame, QCompleter,
                          QPushButton, QMenu, QCompleter, QPixmap)
 
-from Common.ui.util import (check_is_empty, check_field, is_int, field_error,
+from Common.ui.util import (check_is_empty, is_valide_codition_field, is_int, field_error,
                             SystemTrayIcon, date_to_datetime, formatted_number)
 from Common.ui.table import FTableWidget, TotalsWidget
 from Common.ui.common import (FWidget, FBoxTitle, IntLineEdit, LineEdit, FLabel,
@@ -379,19 +379,19 @@ class InvoiceTableWidget(FTableWidget):
                 return
             if check_is_empty(self.parent.name_client_field.lineEdit()):
                 return
-            # if check_field(self.parent.invoice_date,
+            # if is_valide_codition_field(self.parent.invoice_date,
             #                "Le {} est Inférieure à la date de la dernière rapport (<b>{}</b>)".format(date_to_datetime(invoice_date), last_report.date), (last_report.date > date_to_datetime(invoice_date))):
             #     return
             if (pusaisi and check_is_empty(self.cellWidget(row_num, 1))):
                 return
             if (pusaisi and check_is_empty(self.cellWidget(row_num, 2))):
                 return
-            if check_field(self.cellWidget(row_num, 1),
-                           u"<b>{}</b> est supérieur à la quantité restante (<b>{}</b>)".format(
+            if is_valide_codition_field(self.cellWidget(row_num, 1),
+                                        u"<b>{}</b> est supérieur à la quantité restante (<b>{}</b>)".format(
                     qtsaisi, qtremaining), qtremaining < qtsaisi):
                 return
-            if check_field(self.cellWidget(row_num, 2),
-                           u"<b>{}</b> est inférieure au prix minimum de vente<b> {} CFA</b>".format(
+            if is_valide_codition_field(self.cellWidget(row_num, 2),
+                                        u"<b>{}</b> est inférieure au prix minimum de vente<b> {} CFA</b>".format(
                     pusaisi, selling_price), pusaisi < selling_price):
                 print("E")
                 # return

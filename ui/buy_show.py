@@ -10,7 +10,7 @@ from PyQt4.QtGui import (QIcon, QVBoxLayout, QDialog,
 from PyQt4.QtCore import Qt
 
 from Common.ui.util import formatted_number, is_int, show_date
-from Common.ui.common import FWidget, FLabel, FPageTitle, BttExportXLS, Deleted_btt
+from Common.ui.common import FWidget, FLabel, FPageTitle, BttExportXLSX, Deleted_btt
 from Common.ui.table import FTableWidget, TotalsWidget
 
 from configuration import Config
@@ -39,7 +39,7 @@ class BuyShowViewWidget(QDialog, FWidget):
         self.table_show = ShowBuyTableWidget(parent=self)
 
         editbox = QGridLayout()
-        self.btt_export = BttExportXLS("")
+        self.btt_export = BttExportXLSX("")
         self.btt_export.clicked.connect(self.export_xls)
         self.button_dl = Deleted_btt(u"Annuler la facture")
         self.button_dl.released.connect(self.cancellation)

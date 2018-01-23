@@ -8,6 +8,8 @@ import os
 from static import Constants
 import peewee
 
+ROOT_DIR = os.path.dirname(os.path.abspath('__file__'))
+
 
 class Config(Constants):
 
@@ -41,3 +43,11 @@ class Config(Constants):
         pass
     DEBUG = True
     ORG_LOGO = "org_logo.png"
+
+    APP_NAME = "GCISS"
+    APP_VERSION = 1
+    APP_DATE = u"02/2016"
+
+    img_media = os.path.join(os.path.join(ROOT_DIR, "static"), "images/")
+    APP_LOGO = os.path.join(img_media, "logo.png")
+    APP_LOGO_ICO = os.path.join(img_media, "logo.ico")
