@@ -3,28 +3,19 @@
 # vim: ai ts=4 sts=4 et sw=4 nu
 # maintainer: Fad
 
-from __future__ import (
-    unicode_literals, absolute_import, division, print_function)
-
 from datetime import datetime, date
 
-from PyQt4.QtGui import (QVBoxLayout, QGridLayout,
-                         QIcon, QMenu, QTableWidgetItem)
-from PyQt4.QtCore import Qt, QDate
+from PyQt4.QtGui import (
+    QVBoxLayout, QGridLayout, QIcon, QTableWidgetItem)
+from PyQt4.QtCore import QDate
 
 from configuration import Config
-from Common.ui.common import (FormLabel, FWidget, FPeriodHolder, FPageTitle,
-                              Button, BttExportXLSX, FormatDate, ExtendedComboBox)
+from Common.ui.common import (FormLabel, FWidget, FPageTitle, Button,
+                              BttExportXLSX, FormatDate, ExtendedComboBox)
 from Common.ui.table import FTableWidget, TotalsWidget
 from Common.ui.util import device_amount, is_int, date_to_datetime
 from models import Invoice, ProviderOrClient
-from ui.payment_edit_add import EditOrAddPaymentrDialog
-
-
-try:
-    unicode
-except:
-    unicode = str
+# from ui.payment_edit_add import EditOrAddPaymentrDialog
 
 
 class ProvidersViewWidget(FWidget):
@@ -36,7 +27,7 @@ class ProvidersViewWidget(FWidget):
 
         self.parent = parent
 
-        self.title = u"Movements"
+        self.title = u"Les Factures"
 
         self.on_date = FormatDate(
             QDate(date.today().year, 1, 1))
@@ -207,7 +198,7 @@ class RapportTableWidget(FTableWidget):
         self.setRowCount(nb_rows + 2)
         self.setSpan(nb_rows + 2, 2, 2, 4)
         cp = 0
-        self.balance_tt = sum([is_int(unicode(self.item(row_num, 3).text()))
+        self.balance_tt = sum([is_int(str(self.item(row_num, 3).text()))
                                for row_num in range(0, self.data.__len__())])
         self.label_mov_tt = u"Totals "
         self.setItem(nb_rows, 2, TotalsWidget(self.label_mov_tt))

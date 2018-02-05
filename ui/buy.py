@@ -2,32 +2,26 @@
 # -*- encoding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 # maintainer: Fad
-from __future__ import (
-    unicode_literals, absolute_import, division, print_function)
 
 from PyQt4.QtCore import QDate, Qt
 from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout, QGridLayout,
-                         QIcon, QSplitter, QFrame, QPushButton, QMenu,
-                         QCompleter)
+                         QIcon, QSplitter, QPushButton, QMenu)
 
-from models import Product, Report, Buy, ProviderOrClient, Owner
+from models import Product, Report, Buy, ProviderOrClient, Owner, Refund
 from configuration import Config
 
 from Common.ui.table import FTableWidget, TotalsWidget
-from Common.ui.common import (FWidget, IntLineEdit, FBoxTitle, FLabel,
-                              FormLabel, FormatDate, Button, LineEdit)
-from Common.ui.util import (raise_error, formatted_number, is_int,  raise_success,
-                            date_to_datetime, check_is_empty, field_error)
+from Common.ui.common import (
+    FWidget, IntLineEdit, FLabel, ExtendedComboBox, FormLabel, FormatDate,
+    Button, LineEdit)
+from Common.ui.util import (
+    raise_error, formatted_number, is_int,
+    date_to_datetime, check_is_empty, field_error)
 
 from GCommon.ui.product_edit_or_add import EditOrAddProductsDialog
 from GCommon.ui._product_detail import InfoTableWidget
 from ui._resultat_table import ResultatTableWidget
-from ui.buy_show import BuyShowViewWidget
-
-try:
-    unicode
-except:
-    unicode = str
+from ui.buy_purchase import PurchaseInvoiceWidget
 
 
 class BuyViewWidget(FWidget):
@@ -50,22 +44,45 @@ class BuyViewWidget(FWidget):
         self.search_field.textChanged.connect(self.finder)
         # self.search_field.setFixedWidth(200)
 
+        self.string_list = [""] + ["{},{}".format(provid.name, provid.phone)
+                                   for provid in ProviderOrClient.select().where(
+            ProviderOrClient.type_ == ProviderOrClient.FSEUR).order_by(
+            ProviderOrClient.name.desc())]
+
+        # self.name_client_field_new = ""
+        self.name_client_field = ExtendedComboBox()
+        self.name_client_field.addItems(self.string_list)
+
+        self.name_client_field.setMinimumSize(300, 30)
+        self.name_client_field.setToolTip("Nom, numero du fournisseur")
+
         self.add_prod = Button(u"+ &Article")
         self.add_prod.clicked.connect(self.add_product)
-        self.add_prod.setFixedWidth(80)
-        # self.add_prod.setFixedHeight(20)
+        self.add_prod.setFixedWidth(300)
         self.add_prod.setStyleSheet("Text-align:botton")
         self.add_prod.setToolTip("Ajouter un nouvel article")
 
         self.table_buy = BuyTableWidget(parent=self)
         self.table_resultat = ResultatTableWidget(parent=self)
         self.table_info = InfoTableWidget(parent=self)
+        self.name_client_field.currentIndexChanged.connect(
+            self.table_buy.changed_value)
 
-        editbox.addWidget(self.add_prod, 0, 1)
-        editbox.addWidget(FormLabel(u"Date d'achat:"), 0, 4)
-        editbox.addWidget(self.date, 0, 5)
+        editbox.addWidget(self.add_prod, 0, 0)
+        editbox.addWidget(FLabel(u"Doit :"), 0, 3)
+        editbox.addWidget(self.name_client_field, 0, 4)
+        editbox.addWidget(FormLabel(u"Date d'achat:"), 0, 5)
+        editbox.addWidget(self.date, 0, 6)
+        editbox.setColumnStretch(1, 5)
+        # editbox.setColumnStretch(5, 1)
 
-        editbox.setColumnStretch(3, 3)
+        # h_box = QHBoxLayout()
+        # formbox = QFormLayout()
+        # formbox.addRow("", self.add_prod)
+        # formbox.addRow(FormLabel(u"Doit :"), self.name_client_field)
+        # formbox.addRow(FormLabel(u"Date d'achat: :"), self.date)
+        # formbox.addRow(FormLabel(u"Nom :"), self.name_client_field)
+
         splitter = QSplitter(Qt.Horizontal)
 
         splitter_left = QSplitter(Qt.Vertical)
@@ -100,19 +117,39 @@ class BuyViewWidget(FWidget):
     def save_b(self):
         ''' add operation '''
         # entete de la facture
-        if not self.table_buy.isvalid:
-            return False
-        owner = Owner.get(Owner.islog == True)
         date = str(self.date.text())
         values_t = self.table_buy.get_table_items()
         buy = Buy()
         # buy.date = datetime_
-        buy.provd_or_clt = \
-            ProviderOrClient.get_or_create(
-                "Fournisseur", 000000, ProviderOrClient.FSEUR)
-        buy.owner = owner
+        lis_error = []
+        try:
+            self.owner = Owner.get(Owner.islog == True)
+        except:
+            lis_error.append("Aucun utilisateur est connecté <br/>")
+            return
+
+        paid_amount = int(self.table_buy.paid_amount_field.text())
+
+        try:
+            self.name_client, self.phone = self.name_client_field.lineEdit(
+            ).text().split(",")
+            provid = ProviderOrClient.get_or_create(
+                self.name_client, int(self.phone.replace(" ", "")),
+                ProviderOrClient.FSEUR)
+        except ValueError:
+            field_error(self.name_client_field,
+                        "Nom, numéro de téléphone du client")
+
+        buy.owner = self.owner
+        buy.provd_or_clt = provid
         try:
             buy.save()
+
+            if int(paid_amount) != 0:
+                Refund(
+                    type_=Refund.DT, owner=self.owner, amount=paid_amount,
+                    date=date_to_datetime(date), provider_client=provid,
+                    invoice=Buy.get(id=buy.id)).save()
             err = False
         except:
             raise
@@ -140,8 +177,9 @@ class BuyViewWidget(FWidget):
                         u"enregistré dans les rapports")
             return False
         else:
-            self.parent.Notify(u"L'entrée des articles avec succès", "success")
-        self.change_main_context(BuyShowViewWidget, buy=buy)
+            self.parent.Notify(
+                "L'entrée des articles avec succès", "success")
+        self.change_main_context(PurchaseInvoiceWidget)
 
 
 class BuyTableWidget(FTableWidget):
@@ -158,12 +196,12 @@ class BuyTableWidget(FTableWidget):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.popup)
 
-        self.stretch_columns = [0]
+        self.stretch_columns = [0, 1, 2, 3, 4, 5]
         self.align_map = {3: 'r'}
         self.display_vheaders = False
-        self.display_fixed = True
+        # self.display_fixed = True
         self.refresh_()
-        self.isvalid = False
+        # self.isvalid = False
 
     def refresh_(self, choix=None):
         if choix:
@@ -179,12 +217,13 @@ class BuyTableWidget(FTableWidget):
         self.refresh()
 
     def popup(self, pos):
-        if (len(self.data) - 1) < self.selectionModel().selection().indexes()[0].row():
+        if (len(self.data) - 1) < self.selectionModel().selection().indexes(
+        )[0].row():
             return False
         menu = QMenu()
-        quitAction = menu.addAction("Supprimer cette ligne")
+        quit_action = menu.addAction("Supprimer cette ligne")
         action = menu.exec_(self.mapToGlobal(pos))
-        if action == quitAction:
+        if action == quit_action:
             try:
                 self.data.pop(self.selectionModel()
                                   .selection().indexes()[0].row())
@@ -194,25 +233,31 @@ class BuyTableWidget(FTableWidget):
             self.changed_value(self)
 
     def extend_rows(self):
-        nb_rows = self.rowCount()
-        self.setRowCount(nb_rows + 1)
-        self.setSpan(nb_rows, 0, 1, 2)
-        self.setItem(nb_rows, 3, TotalsWidget(u"Montant"))
-        self.setItem(nb_rows, 6, TotalsWidget(formatted_number(u"%d" % 0)))
-
-        nb_rows += 1
-        self.setRowCount(nb_rows + 1)
-        self.setSpan(nb_rows, 0, 1, 6)
         bicon = QIcon.fromTheme('', QIcon(u"{}".format(Config.img_cmedia)))
+        self.paid_amount_field = IntLineEdit()
+        nb_rows = self.rowCount()
+
+        self.setRowCount(nb_rows + 3)
+        self.setSpan(nb_rows, 0, 3, 5)
+        self.setItem(nb_rows, 5, TotalsWidget(u"Montant"))
+        self.setItem(nb_rows, 6, TotalsWidget(formatted_number(u"%d" % 0)))
+        nb_rows += 1
+        # self.setSpan(nb_rows, 0, 1, 6)
+        self.setItem(nb_rows, 5, TotalsWidget("Reste à payer"))
+        self.setCellWidget(nb_rows, 6, self.paid_amount_field)
         self.button = QPushButton(bicon, u"Enregistrer")
         self.button.released.connect(self.parent.save_b)
+        self.button.setEnabled(False)
+        nb_rows += 1
         self.setCellWidget(nb_rows, 6, self.button)
 
-        # pw = (self.parentWidget().width()) / 5
-        # self.setColumnWidth(0, pw)
-        # self.setColumnWidth(1, pw * 2)
-        # self.setColumnWidth(2, pw)
-        # self.setColumnWidth(3, pw)
+        pw = self.parent.parent.page_width() / 6
+        self.setColumnWidth(0, pw * 2)
+        self.setColumnWidth(1, pw)
+        self.setColumnWidth(2, pw)
+        self.setColumnWidth(3, pw)
+        self.setColumnWidth(4, pw)
+        self.setColumnWidth(5, pw)
 
     def _item_for_data(self, row, column, data, context=None):
         if column == 1 or column == 2 or column == 3:
@@ -231,7 +276,8 @@ class BuyTableWidget(FTableWidget):
         """ Recupère les elements du tableau """
 
         list_invoice = []
-        for i in range(self.rowCount() - 2):
+        print("rowCount : {}".format(self.rowCount()))
+        for i in range(self.rowCount() - 3):
             liste_item = []
             row_data = self.data[i]
             try:
@@ -250,21 +296,20 @@ class BuyTableWidget(FTableWidget):
         """ Calcule les Resultat """
         b_f_tt = 0
         v_amount_tt = 0
-        for row_num in xrange(0, self.data.__len__()):
+
+        self.button.setEnabled(False)
+        for row_num in range(0, self.data.__len__()):
 
             qtsaisi = is_int(self.cellWidget(row_num, 1).text()) or 1
             cost_buying = is_int(self.cellWidget(row_num, 2).text())
             selling_price = is_int(self.cellWidget(row_num, 3).text())
 
-            self.isvalid = True
-            # if not selling_price:
-            #     return
-            if (selling_price and check_is_empty(self.cellWidget(row_num, 1))):
-                self.isvalid = False
-            if (selling_price and check_is_empty(self.cellWidget(row_num, 2))):
-                self.isvalid = False
+            if (qtsaisi and check_is_empty(self.cellWidget(row_num, 1))):
+                return
+            if (qtsaisi and check_is_empty(self.cellWidget(row_num, 2))):
+                return
             if (check_is_empty(self.cellWidget(row_num, 3))):
-                self.isvalid = False
+                return
 
             r_amount = qtsaisi * cost_buying
             v_amount = qtsaisi * selling_price
@@ -278,8 +323,13 @@ class BuyTableWidget(FTableWidget):
             self.setItem(row_num, 5, TotalsWidget(formatted_number(b_f_u)))
             self.setItem(row_num, 6, TotalsWidget(formatted_number(b_f)))
             # Mise à jour
-            self._update_data(
-                row_num, [qtsaisi, cost_buying, selling_price, v_amount, b_f_u, b_f])
+            self._update_data(row_num, [
+                qtsaisi, cost_buying, selling_price, v_amount, b_f_u, b_f])
+
+            if check_is_empty(self.parent.name_client_field.lineEdit()):
+                return
         row_num += 1
         self.setItem(row_num, 4, TotalsWidget(formatted_number(v_amount_tt)))
         self.setItem(row_num, 6, TotalsWidget(formatted_number(b_f_tt)))
+
+        self.button.setEnabled(True)

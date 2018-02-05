@@ -5,23 +5,25 @@
 from __future__ import (
     unicode_literals, absolute_import, division, print_function)
 
-from PyQt4.QtGui import (QIcon, QToolBar, QFont, QCursor)
-from PyQt4.QtCore import Qt, QSize
+from PyQt4.QtGui import (QIcon, QToolBar)
+from PyQt4.QtCore import Qt
 
 from Common.ui.common import FWidget
 
 from configuration import Config
 
-from GCommon.ui.products import ProductsViewWidget
-from ui.dashboard import DashbordViewWidget
-from ui.invoice import InvoiceViewWidget
+# from GCommon.ui.products import ProductsViewWidget
+# from ui.dashboard import DashbordViewWidget
+from ui.buy_purchase import PurchaseInvoiceWidget
+from ui.sale_product import SaleProducteWidget
+# from ui.invoice import InvoiceViewWidget
 from ui.apricot import ApricotsViewWidget
-from ui.buy import BuyViewWidget
+# from ui.buy import BuyViewWidget
 from ui.inventory import InventoryViewWidget
-from ui.period_by import PeriodByViewWidget
+# from ui.period_by import PeriodByViewWidget
 from ui.stats import StatViewWidget
-from ui.payment import PaymentViewWidget
 from ui.debt_manager import DebtsViewWidget
+from ui.debt_provider_manager import DebtsProviderViewWidget
 
 
 class MenuToolBar(QToolBar, FWidget):
@@ -43,26 +45,30 @@ class MenuToolBar(QToolBar, FWidget):
         # self.setAutoFillBackground(True)
 
         self.addSeparator()
-        self.addAction(
-            QIcon(u"{}exit.png".format(Config.img_cmedia)), u"Quiter", self.goto_exit)
-        menu = [{"name": u"Tableau de bord", "icon": 'dashboard', "admin": False, "goto": DashbordViewWidget},
-                # {"name": u"Articles", "admin": True,
-                #     "icon": 'product', "goto": ProductsViewWidget},
-                {"name": u"Caise", "admin": False,
-                    "icon": 'apricots', "goto": ApricotsViewWidget},
-                {"name": u"Vente", "admin": False,
-                 "icon": 'invoice', "goto": InvoiceViewWidget},
-                {"name": u"Arivage", "admin": True,
-                 "icon": 'buy', "goto": BuyViewWidget},
-                {"name": u"Statut", "admin": True,
-                 "icon": 'State', "goto": StatViewWidget},
-                {"name": u"Versement", "admin": True,
-                 "icon": 'reports', "goto": PaymentViewWidget},
-                {"name": u"Inventaire", "admin": True,
-                 "icon": 'inventory', "goto": InventoryViewWidget},
-                {"name": u"Dettes", "admin": True,
-                 "icon": 'debt', "goto": DebtsViewWidget},
-                ]
+        self.addAction(QIcon(u"{}exit.png".format(
+            Config.img_cmedia)), u"Quiter", self.goto_exit)
+        menu = [
+            {"name": u"Caise", "admin": False,
+             "icon": 'apricots', "goto": ApricotsViewWidget},
+            {"name": u"Achats", "icon": 'buy',
+             "admin": False, "goto": PurchaseInvoiceWidget},
+            {"name": u"Ventes", "icon": 'invoice',
+             "admin": False, "goto": SaleProducteWidget},
+            # {"name": u"Articles", "admin": True,
+            #     "icon": 'product', "goto": ProductsViewWidget},
+            # {"name": u"Vente", "admin": False,
+            #  "icon": 'invoice', "goto": InvoiceViewWidget},
+            # {"name": u"Arivage", "admin": True,
+            #  "icon": 'buy', "goto": BuyViewWidget},
+            {"name": u"Statut", "admin": True,
+             "icon": 'State', "goto": StatViewWidget},
+            {"name": u"Inventaire", "admin": True,
+             "icon": 'inventory', "goto": InventoryViewWidget},
+            {"name": u"Fournisseurs", "admin": True,
+             "icon": 'debt_provider', "goto": DebtsProviderViewWidget},
+            {"name": u"Clients", "admin": True,
+             "icon": 'debt', "goto": DebtsViewWidget},
+        ]
 
         for m in menu:
             self.addSeparator()

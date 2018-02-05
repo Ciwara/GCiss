@@ -1,30 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # maintainer: Fad
-from __future__ import (
-    unicode_literals, absolute_import, division, print_function)
 
-import os
 
-from PyQt4.QtCore import Qt, QDate
-from PyQt4.QtGui import (QIcon, QVBoxLayout, QFileDialog, QDialog, QTextEdit,
-                         QIntValidator, QFormLayout, QPushButton, QCompleter)
+from PyQt4.QtCore import QDate
+from PyQt4.QtGui import (QVBoxLayout, QDialog, QFormLayout)
 
-from configuration import Config
+# from configuration import Config
 
-from Common.ui.util import (
-    check_is_empty, check_field, date_to_datetime, formatted_number)
+from Common.ui.util import (check_is_empty, is_valide_codition_field,
+                            date_to_datetime, formatted_number)
 from Common.ui.common import (
-    FWidget, FPageTitle, Button_save, FormLabel, FLabel, LineEdit, IntLineEdit,
-    Warning_btt, FormatDate)
-import peewee
+    FWidget, Button_save, FormLabel, IntLineEdit, FormatDate)
+
 from models import Refund
-
-
-try:
-    unicode
-except:
-    unicode = str
 
 
 class RefundEditAddDialog(QDialog, FWidget):
@@ -44,8 +33,8 @@ class RefundEditAddDialog(QDialog, FWidget):
             self.type_ = refund.type_
             self.refund_date_field = FormatDate(self.refund.date)
             self.refund_date_field.setEnabled(False)
-            self.title = u"Modification de {} {}".format(self.refund.type_,
-                                                         self.refund.invoice.client)
+            self.title = u"Modification de {} {}".format(
+                self.refund.type_, self.refund.invoice.client)
             self.succes_msg = u"{} a été bien mise à jour".format(
                 self.refund.type_)
             self.amount = refund.amount
@@ -57,10 +46,11 @@ class RefundEditAddDialog(QDialog, FWidget):
             self.amount = ""
             self.refund = Refund()
             self.last_r = Refund.select().where(
-                Refund.provider_client == provid_clt).order_by(Refund.date.desc()).get()
+                Refund.provider_client == provid_clt).order_by(
+                Refund.date.desc()).get()
 
         self.setWindowTitle(self.title)
-        self.amount_field = IntLineEdit(unicode(self.amount))
+        self.amount_field = IntLineEdit(str(self.amount))
 
         vbox = QVBoxLayout()
         self.last_remaining = self.last_r.refund_remaing()
@@ -96,10 +86,10 @@ class RefundEditAddDialog(QDialog, FWidget):
             return
 
         amount = int(self.amount_field.text())
-        refund_date = unicode(self.refund_date_field.text())
+        refund_date = str(self.refund_date_field.text())
 
         # self.remaining = self.last_r.remaining
-        if check_field(
+        if is_valide_codition_field(
                 self.amount_field, "Ce montant ne peut être supperieur au dettes restante {}.".format(
                 self.last_remaining), amount > self.last_remaining):
             return

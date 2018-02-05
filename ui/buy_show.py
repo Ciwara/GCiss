@@ -5,16 +5,16 @@
 from __future__ import (
     unicode_literals, absolute_import, division, print_function)
 
-from PyQt4.QtGui import (QIcon, QVBoxLayout, QDialog,
-                         QGridLayout, QMenu, QPushButton, QMessageBox)
+from PyQt4.QtGui import (QVBoxLayout, QDialog,
+                         QGridLayout, QMenu, QMessageBox)
 from PyQt4.QtCore import Qt
 
-from Common.ui.util import formatted_number, is_int, show_date
+from Common.ui.util import formatted_number, show_date
 from Common.ui.common import FWidget, FLabel, FPageTitle, BttExportXLSX, Deleted_btt
 from Common.ui.table import FTableWidget, TotalsWidget
 
 from configuration import Config
-from models import Buy, Report, Store
+from models import Buy, Report
 
 from data_helper import check_befor_update_data
 
@@ -31,7 +31,7 @@ class BuyShowViewWidget(QDialog, FWidget):
         self.parent = parent
         self.buy = buy
         self.table_p = table_p
-        self.title = "Arivage"
+        self.title = "ACHAT"
 
         vbox = QVBoxLayout()
         vbox.addWidget(FPageTitle(self.title))
@@ -49,7 +49,7 @@ class BuyShowViewWidget(QDialog, FWidget):
         editbox.addWidget(
             FLabel(u"<b>Date : </b>%s" % (show_date(self.buy.date))), 1, 3)
         editbox.addWidget(self.button_dl, 0, 4)
-        editbox.addWidget(self.btt_export, 1, 4)
+        editbox.addWidget(self.btt_export, 0, 5)
 
         vbox.addLayout(editbox)
         vbox.addWidget(self.table_show)

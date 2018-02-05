@@ -154,7 +154,8 @@ class Payment(BaseModel):
     def __unicode__(self):
         return "Le {date} {type_} d'un montant de {amount} Fcfa".format(
             date=self.date.strftime(FDATE), type_=self.type_,
-            amount=self.credit if self.type_ == self.CREDIT else self.debit, lib=self.libelle)
+            amount=self.credit if self.type_ == self.CREDIT else self.debit,
+            lib=self.libelle)
 
     def __str__(self):
         return self.__unicode__()
@@ -227,17 +228,18 @@ class ProviderOrClient(BaseModel):
     TYPES = [CLT, FSEUR]
 
     name = CharField(verbose_name=("Nom de votre entreprise"))
-    address = TextField(
-        null=True, verbose_name=("Adresse principale de votre société"))
-    phone = IntegerField(
-        unique=True, verbose_name=("Numero de téléphone de votre entreprise"))
-    email = CharField(
-        null=True, verbose_name=("Adresse électronique de votre entreprise"))
-    legal_infos = TextField(
-        null=True, verbose_name=("Informations légales"))
+    address = TextField(null=True,
+                        verbose_name=("Adresse principale de votre société"))
+    phone = IntegerField(unique=True,
+                         verbose_name=("Numero de téléphone de votre entreprise"))
+    email = CharField(null=True,
+                      verbose_name=("Adresse électronique de votre entreprise"))
+    legal_infos = TextField(null=True,
+                            verbose_name=("Informations légales"))
     type_ = CharField(max_length=30, choices=TYPES, default=CLT)
-    picture = ForeignKeyField(
-        FileJoin, null=True, related_name='file_joins_pictures', verbose_name=("image de la societe"))
+    picture = ForeignKeyField(FileJoin, null=True,
+                              related_name='file_joins_pictures',
+                              verbose_name=("image de la societe"))
 
     def invoices(self):
         return Invoice.select().where(Invoice.client == self)
@@ -257,7 +259,8 @@ class ProviderOrClient(BaseModel):
 
     def last_refund(self):
         try:
-            return Refund.select().where(Refund.provider_client == self).order_by(
+            return Refund.select().where(
+                Refund.provider_client == self).order_by(
                 Refund.date.desc()).get()
         except Exception as e:
             return None
@@ -307,8 +310,8 @@ class Invoice(BaseModel):
     paid_amount = IntegerField(verbose_name="Reste à payer")
 
     def __str__(self):
-        return "{num}/{client}/{owner}".format(num=self.number,
-                                               owner=self.owner, client=self.client)
+        return "{num}/{client}/{owner}".format(
+            num=self.number, owner=self.owner, client=self.client)
 
     def __unicode__(self):
         return self.__str__()
@@ -382,8 +385,8 @@ class Buy(BaseModel):
                                    verbose_name=("Proprietaire"))
 
     def __str__(self):
-        return u"{owner}/{provd_or_clt}".format(owner=self.owner,
-                                                provd_or_clt=self.provd_or_clt)
+        return u"{owner}/{provd_or_clt}".format(
+            owner=self.owner, provd_or_clt=self.provd_or_clt)
 
     @property
     def items(self):

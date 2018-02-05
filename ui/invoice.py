@@ -2,30 +2,24 @@
 # -*- encoding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 # maintainer: Fad
-from __future__ import (
-    unicode_literals, absolute_import, division, print_function)
-
 from PyQt4.QtCore import QDate, Qt
-from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout, QComboBox,
-                         QIcon, QGridLayout, QSplitter, QFrame, QCompleter,
-                         QPushButton, QMenu, QCompleter, QPixmap)
+from PyQt4.QtGui import (
+    QVBoxLayout, QComboBox, QIcon, QGridLayout, QSplitter, QPushButton, QMenu)
 
-from Common.ui.util import (check_is_empty, is_valide_codition_field, is_int, field_error,
-                            SystemTrayIcon, date_to_datetime, formatted_number)
+from Common.ui.util import (
+    check_is_empty, is_valide_codition_field, is_int, field_error,
+    date_to_datetime, formatted_number)
 from Common.ui.table import FTableWidget, TotalsWidget
-from Common.ui.common import (FWidget, FBoxTitle, IntLineEdit, LineEdit, FLabel,
-                              FormatDate, ErrorLabel, BttSmall, ExtendedComboBox)
+from Common.ui.common import (
+    FWidget, IntLineEdit, LineEdit, FLabel, FormatDate, BttSmall,
+    ExtendedComboBox)
 from peewee import fn
 
 from GCommon.ui._product_detail import InfoTableWidget
-from ui.invoice_show import ShowInvoiceViewWidget
+# from ui.invoice_show import ShowInvoiceViewWidget
+from ui.sale_product import SaleProducteWidget
 from configuration import Config
 from models import (Product, Invoice, Owner, Report, ProviderOrClient, Refund)
-
-try:
-    unicode
-except:
-    unicode = str
 
 
 class InvoiceViewWidget(FWidget):
@@ -33,7 +27,7 @@ class InvoiceViewWidget(FWidget):
     def __init__(self, product="", parent=0, *args, **kwargs):
         super(InvoiceViewWidget, self).__init__(parent=parent, *args, **kwargs)
         self.parentWidget().setWindowTitle(
-            Config.APP_NAME + u"      Ventes")
+            Config.APP_NAME + "      Ventes")
         self.parent = parent
 
         vbox = QVBoxLayout()
@@ -41,11 +35,12 @@ class InvoiceViewWidget(FWidget):
         editbox = QGridLayout()
         try:
             next_number = int(
-                Invoice.select().order_by(Invoice.number.desc()).get().number) + 1
+                Invoice.select().order_by(Invoice.number.desc()).get(
+                ).number) + 1
         except:
             next_number = 1
         self.num_invoice = IntLineEdit(str(next_number))
-        self.num_invoice.setToolTip(u"Le numéro")
+        self.num_invoice.setToolTip("Le numéro")
         self.num_invoice.setMaximumSize(
             40, self.num_invoice.maximumSize().height())
         self.invoice_date = FormatDate(QDate.currentDate())
@@ -53,19 +48,21 @@ class InvoiceViewWidget(FWidget):
 
         self.string_list = [""] + ["{},{}".format(clt.name, clt.phone)
                                    for clt in ProviderOrClient.select().where(
-            ProviderOrClient.type_ == ProviderOrClient.CLT).order_by(ProviderOrClient.name.desc())]
+            ProviderOrClient.type_ == ProviderOrClient.CLT).order_by(
+            ProviderOrClient.name.desc())]
 
         # self.name_client_field_new = ""
         self.name_client_field = ExtendedComboBox()
         self.name_client_field.addItems(self.string_list)
 
-        self.name_client_field.setMaximumSize(
-            200, self.name_client_field.maximumSize().height())
+        self.name_client_field.setMinimumSize(300, 30)
+        # self.name_client_field.setMaximumSize(
+        #     200, self.name_client_field.maximumSize().height())
         self.name_client_field.setToolTip("Nom, numero du client")
 
-        self.add_clt_btt = BttSmall(u"+")
+        self.add_clt_btt = BttSmall("+")
         self.add_clt_btt.clicked.connect(self.add_clt)
-        self.add_clt_btt.setFixedWidth(50)
+        self.add_clt_btt.setFixedWidth(300)
 
         # Combobox widget for add store
         self.liste_type_invoice = [Invoice.TYPE_FACT, Invoice.TYPE_BON,
@@ -74,7 +71,7 @@ class InvoiceViewWidget(FWidget):
         self.box_type_inv = QComboBox()
         for index in range(0, len(self.liste_type_invoice)):
             op = self.liste_type_invoice[index]
-            sentence = u"%(name)s" % {'name': op}
+            sentence = "%(name)s" % {'name': op}
             self.box_type_inv.addItem(sentence, op)
 
         self.search_field = LineEdit()
@@ -86,15 +83,17 @@ class InvoiceViewWidget(FWidget):
         self.table_invoice = InvoiceTableWidget(parent=self)
         self.table_resultat = ResultatTableWidget(parent=self)
         self.table_info = InfoTableWidget(parent=self)
+
+        self.name_client_field.currentIndexChanged.connect(
+            self.table_invoice.changed_value)
         self.table_resultat.refresh_("")
         editbox.addWidget(self.box_type_inv, 0, 2)
         editbox.addWidget(self.num_invoice, 0, 3)
-        editbox.addWidget(FLabel(u"Doit :"), 1, 2)
-        editbox.addWidget(self.name_client_field, 1, 3)
-        # editbox.addWidget(self.add_clt_btt, 1, 4)
-        editbox.addWidget(self.invoice_date, 0, 6)
+        editbox.addWidget(FLabel("Doit :"), 0, 5)
+        editbox.addWidget(self.name_client_field, 0, 6)
+        editbox.addWidget(self.invoice_date, 0, 7)
         editbox.setColumnStretch(0, 1)
-        editbox.setColumnStretch(5, 1)
+        # editbox.setColumnStretch(4, 2)
         splitter = QSplitter(Qt.Horizontal)
 
         splitter_left = QSplitter(Qt.Vertical)
@@ -124,20 +123,8 @@ class InvoiceViewWidget(FWidget):
 
     def finder(self):
         search_term = self.search_field.text()
-        value = unicode(search_term)
+        value = str(search_term)
         self.table_resultat.refresh_(value)
-
-    def is_valide(self):
-        print("is_valide")
-        try:
-            self.name_client, self.phone = self.name_client_field.lineEdit().text().split(
-                ",")
-        except Exception as e:
-            # print(e)
-            field_error(
-                self.name_client_field, "Nom, numéro de téléphone du client")
-            return False
-        return True
 
     def refresh_(self):
         pass
@@ -146,9 +133,8 @@ class InvoiceViewWidget(FWidget):
         ''' add operation '''
         # entete de la facture
         print("save")
-        if not self.is_valide():
-            return
-        invoice_date = unicode(self.invoice_date.text())
+
+        invoice_date = str(self.invoice_date.text())
         num_invoice = int(self.num_invoice.text())
         invoice_type = self.liste_type_invoice[
             self.box_type_inv.currentIndex()]
@@ -160,11 +146,15 @@ class InvoiceViewWidget(FWidget):
             lis_error.append("Aucun utilisateur est connecté <br/>")
         paid_amount = int(self.table_invoice.paid_amount_field.text())
         try:
+            self.name_client, self.phone = self.name_client_field.lineEdit(
+            ).text().split(",")
             clt = ProviderOrClient.get_or_create(
-                self.name_client, int(self.phone.replace(" ", "")), ProviderOrClient.CLT)
+                self.name_client, int(self.phone.replace(" ", "")),
+                ProviderOrClient.CLT)
         except ValueError:
-            field_error(
-                self.name_client_field, "Nom, numéro de téléphone du client")
+            field_error(self.name_client_field,
+                        "Nom, numéro de téléphone du client")
+
         invoice.number = num_invoice
         invoice.owner = self.owner
         invoice.client = clt
@@ -176,9 +166,10 @@ class InvoiceViewWidget(FWidget):
         try:
             invoice.save()
             if int(paid_amount) != 0 or invoice_type == Invoice.TYPE_BON:
-                Refund(type_=Refund.DT, owner=self.owner, amount=paid_amount,
-                       date=date_to_datetime(invoice_date), provider_client=clt,
-                       invoice=Invoice.get(number=num_invoice)).save()
+                Refund(
+                    type_=Refund.DT, owner=self.owner, amount=paid_amount,
+                    date=date_to_datetime(invoice_date), provider_client=clt,
+                    invoice=Invoice.get(number=num_invoice)).save()
         except Exception as e:
             invoice.deletes_data()
             lis_error.append(
@@ -207,12 +198,17 @@ class InvoiceViewWidget(FWidget):
             return False
         else:
             self.parent.Notify("Facture Enregistrée avec succès", "success")
-            self.table_invoice._reset()
-            try:
-                self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
-                                        table_p=self,  invoice_num=invoice.number)
-            except Exception as e:
-                print(e)
+            # self.table_invoice._reset()
+            # try:
+            #     self.parent.open_dialog(
+            #         ShowInvoiceViewWidget, modal=True, opacity=100,
+            #         table_p=self, invoice_num=invoice.number)
+            # except Exception as e:
+            #     print(e)
+
+            self.parent.Notify(
+                "L'entrée des articles avec succès", "success")
+            self.change_main_context(SaleProducteWidget)
 
 
 class ResultatTableWidget(FTableWidget):
@@ -224,10 +220,10 @@ class ResultatTableWidget(FTableWidget):
 
         self.parent = parent
 
-        self.hheaders = [u"Produits", u"Ajouter"]
+        self.hheaders = ["Produits", "Ajouter"]
         self.stretch_columns = [0]
         self.align_map = {0: 'l', 1: 'r'}
-        self.display_fixed = True
+        # self.display_fixed = True
         self.refresh_()
 
     def refresh_(self, value=None):
@@ -240,14 +236,15 @@ class ResultatTableWidget(FTableWidget):
         products = [(Product.get(id=rpt.product_id).name) for rpt in
                     Report.select(fn.Distinct(Report.product))]
         if value:
-            products = [(prod.name) for prod in Product.select().where(Product.name.contains(value))
-                        .where(Product.name << products).order_by(Product.name.desc())]
+            products = [(prod.name) for prod in Product.select(
+            ).where(Product.name.contains(value))
+                .where(Product.name << products).order_by(Product.name.desc())]
         self.data = [(prd, "") for prd in products]
 
     def _item_for_data(self, row, column, data, context=None):
         if column == 1:
-            return TotalsWidget(QIcon(u"{img_media}{img}".format(img_media=Config.img_cmedia,
-                                                                 img="go-next.png")), "")
+            return TotalsWidget(QIcon("{img_media}{img}".format(
+                img_media=Config.img_cmedia, img="go-next.png")), "")
 
         return super(ResultatTableWidget, self)._item_for_data(row, column,
                                                                data, context)
@@ -266,7 +263,7 @@ class InvoiceTableWidget(FTableWidget):
 
         self.parent = parent
         self.pparent = parent.parent
-        self.hheaders = [u"Modeles", u"Quantité", u"Prix Unitaire", u"Montant"]
+        self.hheaders = ["Modeles", "Quantité", "Prix Unitaire", "Montant"]
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.popup)
@@ -274,13 +271,13 @@ class InvoiceTableWidget(FTableWidget):
         self.stretch_columns = [0, 2]
         self.align_map = {3: 'r'}
         self.display_vheaders = False
-        self.display_fixed = True
+        # self.display_fixed = True
         self.refresh_()
         self.isvalid = False
 
     def refresh_(self, choix=None):
         if choix:
-            self.row = [u"%s" % choix.name, "", ""]
+            self.row = ["%s" % choix.name, "", ""]
             if not [row for row in self.data if self.row[0] in row]:
                 self.set_data_for()
                 self.refresh()
@@ -296,9 +293,9 @@ class InvoiceTableWidget(FTableWidget):
         if (len(self.data) - 1) < row:
             return False
         menu = QMenu()
-        quitAction = menu.addAction("Supprimer cette ligne")
+        quit_action = menu.addAction("Supprimer cette ligne")
         action = menu.exec_(self.mapToGlobal(pos))
-        if action == quitAction:
+        if action == quit_action:
             try:
                 self.data.pop(row)
             except IndexError:
@@ -308,22 +305,22 @@ class InvoiceTableWidget(FTableWidget):
     def extend_rows(self):
         nb_rows = self.rowCount()
         self.setRowCount(nb_rows + 3)
-        self.setItem(nb_rows, 2, TotalsWidget(u"Montant"))
-        monttc = TotalsWidget(formatted_number(u"%d" % 0))
+        self.setItem(nb_rows, 2, TotalsWidget("Montant"))
+        monttc = TotalsWidget(formatted_number("%d" % 0))
         self.setItem(nb_rows, 3, monttc)
         nb_rows += 1
         bicon = QIcon.fromTheme(
-            '', QIcon(u"{}save.png".format(Config.img_media)))
-        self.button = QPushButton(bicon, u"Enregistrer")
+            '', QIcon("{}save.png".format(Config.img_media)))
+        self.button = QPushButton(bicon, "Enregistrer")
         self.button.released.connect(self.parent.save_b)
         self.button.setEnabled(False)
-        self.setItem(nb_rows, 2, TotalsWidget(u"Reste à payer"))
+        self.setItem(nb_rows, 2, TotalsWidget("Reste à payer"))
         self.paid_amount_field = IntLineEdit()
         self.setCellWidget(nb_rows, 3, self.paid_amount_field)
         self.setCellWidget(nb_rows + 1, 3, self.button)
         self.setSpan(nb_rows - 1, 0, 3, 2)
 
-        pw = self.parent.parent.page_width() / 7
+        pw = self.parent.parent.page_width() / 5
         self.setColumnWidth(0, pw * 2)
         self.setColumnWidth(1, pw)
         self.setColumnWidth(2, pw)
@@ -334,7 +331,7 @@ class InvoiceTableWidget(FTableWidget):
 
     def _item_for_data(self, row, column, data, context=None):
         if column == 1 or column == 2:
-            self.line_edit = IntLineEdit(u"%s" % data)
+            self.line_edit = IntLineEdit("%s" % data)
             self.line_edit.textChanged.connect(self.changed_value)
             self.line_edit.setAlignment(Qt.AlignRight)
             return self.line_edit
@@ -349,7 +346,7 @@ class InvoiceTableWidget(FTableWidget):
             liste_item = []
             row_data = self.data[i]
             try:
-                liste_item.append(unicode(row_data[0]))
+                liste_item.append(str(row_data[0]))
                 liste_item.append(int(row_data[1]))
                 liste_item.append(int(row_data[2]))
                 list_invoice.append(liste_item)
@@ -362,23 +359,18 @@ class InvoiceTableWidget(FTableWidget):
     def changed_value(self, refresh=False):
         """ Calcule les Resultat """
         self.mtt_ht = 0
-        # self.button.setEnabled(False)
-        for row_num in xrange(0, self.data.__len__()):
+        self.button.setEnabled(False)
+        for row_num in range(0, self.data.__len__()):
             product = Product.get(
-                Product.name == unicode(self.item(row_num, 0).text()))
+                Product.name == str(self.item(row_num, 0).text()))
             last_report = product.last_report
             last_price = product.last_price()
             qtremaining = last_report.remaining
             selling_price = last_price
-            invoice_date = unicode(self.parent.invoice_date.text())
-
+            # invoice_date = str(self.parent.invoice_date.text())
             qtsaisi = is_int(self.cellWidget(row_num, 1).text())
             pusaisi = is_int(self.cellWidget(row_num, 2).text())
 
-            if check_is_empty(self.parent.num_invoice):
-                return
-            if check_is_empty(self.parent.name_client_field.lineEdit()):
-                return
             # if is_valide_codition_field(self.parent.invoice_date,
             #                "Le {} est Inférieure à la date de la dernière rapport (<b>{}</b>)".format(date_to_datetime(invoice_date), last_report.date), (last_report.date > date_to_datetime(invoice_date))):
             #     return
@@ -386,22 +378,31 @@ class InvoiceTableWidget(FTableWidget):
                 return
             if (pusaisi and check_is_empty(self.cellWidget(row_num, 2))):
                 return
-            if is_valide_codition_field(self.cellWidget(row_num, 1),
-                                        u"<b>{}</b> est supérieur à la quantité restante (<b>{}</b>)".format(
+            if is_valide_codition_field(
+                self.cellWidget(row_num, 1),
+                "<b>{}</b> est supérieur à la quantité restante (<b>{}</b>)".format(
                     qtsaisi, qtremaining), qtremaining < qtsaisi):
                 return
-            if is_valide_codition_field(self.cellWidget(row_num, 2),
-                                        u"<b>{}</b> est inférieure au prix minimum de vente<b> {} CFA</b>".format(
-                    pusaisi, selling_price), pusaisi < selling_price):
-                print("E")
-                # return
+            # if is_valide_codition_field(
+            #     self.cellWidget(row_num, 2),
+            #     "<b>{}</b> est inférieure au prix minimum de vente<b> {} CFA</b>".format(
+            #         pusaisi, selling_price), pusaisi < selling_price):
+            #     print("")
 
             montant = (qtsaisi * pusaisi)
             self.mtt_ht += montant
             self.setItem(row_num, 3, TotalsWidget(formatted_number(montant)))
+
             self._update_data(row_num, [qtsaisi, pusaisi, self.mtt_ht])
+
+            if check_is_empty(self.parent.num_invoice):
+                return
+            if check_is_empty(self.parent.name_client_field.lineEdit()):
+                return
+
         self.setItem(
             row_num + 1, 3, TotalsWidget(formatted_number(self.mtt_ht)))
+
         typ = self.parent.liste_type_invoice[
             self.parent.box_type_inv.currentIndex()]
         self.paid_amount_field.setText(

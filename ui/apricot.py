@@ -5,15 +5,16 @@
 from __future__ import (
     unicode_literals, absolute_import, division, print_function)
 
-from datetime import datetime
+# from datetime import datetime
 
-from PyQt4.QtCore import QDate, Qt
-from PyQt4.QtGui import QIcon, QVBoxLayout, QGridLayout, QFont
+from peewee import fn
+
+from PyQt4.QtCore import QDate
+from PyQt4.QtGui import QVBoxLayout, QGridLayout
 
 from models import Report, Refund
 from configuration import Config
 
-from peewee import fn
 from Common.ui.common import FWidget, FPageTitle, FormatDate, BttExportXLSX
 from Common.ui.util import formatted_number, date_on_or_end, is_int
 from Common.ui.table import FTableWidget, TotalsWidget
@@ -34,6 +35,7 @@ class ApricotsViewWidget(FWidget):
 
         self.parent = parent
 
+        vbox = QVBoxLayout()
         tablebox = QVBoxLayout()
         gridbox = QGridLayout()
         self.title = "La caise"
@@ -52,7 +54,6 @@ class ApricotsViewWidget(FWidget):
         gridbox.addWidget(self.btt_export, 0, 2)
         gridbox.setColumnStretch(1, 5)
 
-        vbox = QVBoxLayout()
         vbox.addLayout(gridbox)
         vbox.addLayout(tablebox)
         self.setLayout(vbox)
@@ -83,7 +84,7 @@ class ApricotsTableWidget(FTableWidget):
 
         self.parent = parent
 
-        self.hheaders = [u"models", u"Quantité",  u"P Vente", u"Montant"]
+        self.hheaders = [u"models", u"Quantité", u"P Vente", u"Montant"]
 
         self.stretch_columns = [0, 1, 2, 5]
         self.align_map = {1: "r", 2: "r", 3: "r", 4: "r"}
@@ -119,13 +120,13 @@ class ApricotsTableWidget(FTableWidget):
     def extend_rows(self):
 
         self.parent.btt_export.setEnabled(True)
-        nb_rows = self.rowCount()
+        self.nb_rows = self.rowCount()
         date = self.parent.date_.text()
 
-        self.setRowCount(nb_rows + 4)
+        self.setRowCount(self.nb_rows + 4)
 
         self.amount_ht = 0
-        for row_num in xrange(0, self.data.__len__()):
+        for row_num in range(0, self.data.__len__()):
             mtt = is_int(self.item(row_num, 3).text())
             self.amount_ht += mtt
 
@@ -138,7 +139,7 @@ class ApricotsTableWidget(FTableWidget):
         self.setItem(row_num, 2, TotalsWidget(u"Dette du jour : "))
         self.total_debt = Refund.select(fn.SUM(Refund.amount)).where(
             Refund.type_ == Refund.DT, Refund.date < date_on_or_end(
-                date, on=False),  Refund.date > date_on_or_end(date)).scalar() or 0
+                date, on=False), Refund.date > date_on_or_end(date)).scalar() or 0
         if self.total_debt:
             self.amount_apricot -= self.total_debt
         self.setItem(row_num, 3, TotalsWidget(
@@ -147,7 +148,7 @@ class ApricotsTableWidget(FTableWidget):
         self.setItem(row_num, 2, TotalsWidget(u"Dette reglée : "))
         self.total_refund = Refund.select(fn.SUM(Refund.amount)).where(
             Refund.type_ == Refund.RB, Refund.date < date_on_or_end(
-                date, on=False),  Refund.date > date_on_or_end(date)).scalar() or 0
+                date, on=False), Refund.date > date_on_or_end(date)).scalar() or 0
         if self.total_refund:
             self.amount_apricot += self.total_refund
         self.setItem(row_num, 3, TotalsWidget(
@@ -156,16 +157,16 @@ class ApricotsTableWidget(FTableWidget):
         self.setItem(row_num, 2, TotalsWidget(u"Caise : "))
         self.setItem(row_num, 3, TotalsWidget(
             formatted_number(formatted_number(self.amount_apricot))))
-        self.setSpan(nb_rows, 0, 4, 2)
+        self.setSpan(self.nb_rows, 0, 4, 2)
 
     def _item_for_data(self, row, column, data, context=None):
 
-        return super(ApricotsTableWidget, self)._item_for_data(row, column,
-                                                               data, context)
+        return super(ApricotsTableWidget, self)._item_for_data(
+            row, column, data, context)
 
     def click_item(self, row, column, *args):
         pass
-        self.setSpan(nb_rows, 0, 2, 2)
+        self.setSpan(self.nb_rows, 0, 2, 2)
 
     def get_table_items(self):
         """ Recupère les elements du tableau """

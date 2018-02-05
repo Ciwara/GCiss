@@ -64,9 +64,9 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
         editbox.addWidget(FLabel(u"%s le %s" % (
             self.invoice.location, show_date(self.invoice.date))), 1, 4)
         editbox.addWidget(FLabel(u"Doit: %s " % self.invoice.client), 1, 0)
-        editbox.addWidget(self.button_pdf, 1, 5)
+        editbox.addWidget(self.button_pdf, 0, 5)
         editbox.addWidget(self.button_dl, 0, 4)
-        editbox.addWidget(self.button_xls, 1, 6)
+        editbox.addWidget(self.button_xls, 0, 6)
 
         vbox.addLayout(editbox)
         vbox.addWidget(self.table_show)

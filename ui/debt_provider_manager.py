@@ -20,13 +20,13 @@ from configuration import Config
 ALL_CONTACTS = "TOUS"
 
 
-class DebtsViewWidget(FWidget):
+class DebtsProviderViewWidget(FWidget):
 
     """ Shows the home page  """
 
     def __init__(self, parent=0, *args, **kwargs):
-        super(DebtsViewWidget, self).__init__(parent=parent,
-                                              *args, **kwargs)
+        super(DebtsProviderViewWidget, self).__init__(parent=parent,
+                                                      *args, **kwargs)
         self.parent = parent
         self.parentWidget().setWindowTitle(
             Organization.get(id=1).name_orga + u"Gestion des dettes")
@@ -106,15 +106,16 @@ class ProviderOrClientTableWidget(QListWidget):
                     "Le client {} n'est pas endetté".format(self.item(row).text()), "error")
         if action == editaction:
             from GCommon.ui.provider_client_edit_add import EditOrAddClientOrProviderDialog
-            self.parent.open_dialog(EditOrAddClientOrProviderDialog, modal=True,
-                                    prov_clt=provid_clt, table_p=self)
+            self.parent.open_dialog(
+                EditOrAddClientOrProviderDialog, modal=True,
+                prov_clt=provid_clt, table_p=self)
 
     def refresh_(self, provid_clt=None):
         """ Rafraichir la liste des provid_cltes"""
         self.clear()
         self.addItem(ProviderOrClientQListWidgetItem(ALL_CONTACTS))
         qs = ProviderOrClient.select().where(
-            ProviderOrClient.type_ == ProviderOrClient.CLT)
+            ProviderOrClient.type_ == ProviderOrClient.FSEUR)
         if provid_clt:
             qs = qs.where(ProviderOrClient.name.contains(provid_clt))
         for provid_clt in qs:
@@ -137,7 +138,8 @@ class ProviderOrClientQListWidgetItem(QListWidgetItem):
 
         if not isinstance(self.provid_clt, str):
             icon.addPixmap(QPixmap("{}.png".format(
-                Config.img_media + "debt" if self.provid_clt.is_indebted() else Config.img_cmedia + "user_active")),
+                Config.img_media + "debt_provider" if self.provid_clt.is_indebted(
+                ) else Config.img_cmedia + "user_active")),
                 QIcon.Normal, QIcon.Off)
 
         self.setIcon(icon)
@@ -220,8 +222,10 @@ class DebtsTableWidget(FTableWidget):
 
     def set_data_for(self, provid_clt_id=None, search=None):
         self.provid_clt_id = provid_clt_id
-        qs = Refund.select().where(
-            Refund.status == False).order_by(Refund.date.desc())
+        qs = Refund.select().where(Refund.status == False).join(
+            ProviderOrClient).where(
+            ProviderOrClient.type_ == ProviderOrClient.FSEUR
+        ).order_by(Refund.date.desc())
 
         self.remaining = 0
         if isinstance(provid_clt_id, int):
@@ -229,13 +233,14 @@ class DebtsTableWidget(FTableWidget):
                 Refund.provider_client == ProviderOrClient.get(id=provid_clt_id))
         else:
             for prov in ProviderOrClient.select().where(
-                    ProviderOrClient.type_ == ProviderOrClient.CLT):
+                    ProviderOrClient.type_ == ProviderOrClient.FSEUR):
                 self.remaining += prov.last_remaining()
         self.parent.remaining_box.setText(
             self.display_remaining(formatted_number(self.remaining)))
 
         self.data = [(ref.id, ref.type_, ref.date, ref.invoice.number,
                       ref.amount, ref.remaining) for ref in qs.iterator()]
+        print("DATA ", self.data)
 
     def extend_rows(self):
         if isinstance(self.provid_clt_id, int):

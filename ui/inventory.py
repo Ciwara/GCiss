@@ -150,7 +150,7 @@ class InventaireTableWidget(FTableWidget):
         self.setItem(nb_rows + 1, 2, TotalsWidget(u"TOTAUX: "))
 
         self.sum_totals = 0
-        for row_num in xrange(0, self.data.__len__()):
+        for row_num in range(0, self.data.__len__()):
             self.sum_totals += is_int(self.item(row_num, 3).text())
         self.setItem(
             row_num + 2, 3, TotalsWidget(formatted_number(self.sum_totals)))
