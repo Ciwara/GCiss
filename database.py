@@ -9,8 +9,6 @@ from models import (Store, Product, Report, Category, Invoice, Buy, Payment,
                     Refund, ProviderOrClient)
 
 
-from models import (Payment, ProviderOrClient)
-
 from Common.cdatabase import AdminDatabase
 
 
@@ -23,8 +21,14 @@ class Setup(AdminDatabase):
 
         self.LIST_CREAT.append(Invoice)
         self.LIST_CREAT.append(Buy)
-        self.LIST_CREAT + [Store, Product, Report, Category, Invoice, Buy,
-                           Payment, Refund, ProviderOrClient]
+        self.LIST_CREAT.append(Report)
+        self.LIST_CREAT.append(Store)
+        self.LIST_CREAT.append(Product)
+        self.LIST_CREAT.append(Category)
+        self.LIST_CREAT.append(Payment)
+        self.LIST_CREAT.append(Refund)
+        self.LIST_CREAT.append(Report)
+        self.LIST_CREAT.append(ProviderOrClient)
 
 
 # def setup(drop_tables=False):

@@ -21,20 +21,22 @@ NOW = datetime.now()
 class Store(Store):
 
     def last_report(self):
-        return self.get_or_none(Report.select().where(Report.store == self).order_by(Report.date.desc()))
+        return self.get_or_none(Report.select().where(
+            Report.store == self).order_by(Report.date.desc()))
 
     def lasts_reports(self):
         try:
-            return Report.select().where(Report.store == self).order_by(Report.date.desc()).all()
+            return Report.select().where(Report.store == self).order_by(
+                Report.date.desc()).all()
         except Exception as e:
-            # print("lasts_reports ", e)
+            print("lasts_reports ", e)
             raise
 
     def get_reports(self):
 
         try:
             return Report.select().where(Report.store == self)
-        except peewee.ReportDoesNotExist as e:
+        except Exception as e:
             print("get_reports ", e)
 
     def get_report_or_none(self):
@@ -87,9 +89,6 @@ class Product(BaseModel):
             " ", "")
         super(Product, self).save()
 
-    def display_name(self):
-        return u"{}".format(self.name)
-
     def get_report_or_none(self):
         return self.get_or_none(Report.select().where(Report.product == self))
 
@@ -112,7 +111,8 @@ class Product(BaseModel):
 
     def reports(self):
         try:
-            return Report.select().where(Report.product == self).order_by(Report.date.desc())
+            return Report.select().where(
+                Report.product == self).order_by(Report.date.desc())
         except Exception as e:
             # print(e)
             pass
@@ -122,7 +122,8 @@ class Product(BaseModel):
             last_selling_price = Report.select().where(
                 Report.product == self,
                 Report.type_ == Report.E,
-                Report.deleted == False).order_by(Report.date.desc()).get().selling_price
+                Report.deleted == False).order_by(
+                Report.date.desc()).get().selling_price
         except Exception as e:
             print("last_price", e)
             last_selling_price = 0
@@ -168,8 +169,8 @@ class Payment(BaseModel):
         Calcul du balance en stock après une operation."""
         self.owner = Owner.get(Owner.islog == True)
         print("SAVE BEGIN")
-        previous_balance = int(
-            self.last_balance_payment().balance if self.last_balance_payment() else 0)
+        previous_balance = int(self.last_balance_payment(
+        ).balance if self.last_balance_payment() else 0)
         if self.type_ == self.CREDIT:
             self.balance = previous_balance + int(self.credit)
             self.debit = 0
@@ -190,8 +191,9 @@ class Payment(BaseModel):
 
     def next_rpts(self):
         try:
-            return Payment.select().where(Payment.date > self.date,
-                                          Payment.deleted == False).order_by(Payment.date.asc())
+            return Payment.select().where(
+                Payment.date > self.date, Payment.deleted == False).order_by(
+                Payment.date.asc())
         except Exception as e:
             return None
             print("next_rpt", e)
@@ -210,7 +212,8 @@ class Payment(BaseModel):
     def last_balance_payment(self):
         try:
             return Payment.select().where(
-                Payment.deleted == False, Payment.date < self.date).order_by(Payment.date.desc()).get()
+                Payment.deleted == False, Payment.date < self.date).order_by(
+                Payment.date.desc()).get()
         except Exception as e:
             print("last_balance_payment", e)
             return None
@@ -228,18 +231,17 @@ class ProviderOrClient(BaseModel):
     TYPES = [CLT, FSEUR]
 
     name = CharField(verbose_name=("Nom de votre entreprise"))
-    address = TextField(null=True,
-                        verbose_name=("Adresse principale de votre société"))
-    phone = IntegerField(unique=True,
-                         verbose_name=("Numero de téléphone de votre entreprise"))
-    email = CharField(null=True,
-                      verbose_name=("Adresse électronique de votre entreprise"))
-    legal_infos = TextField(null=True,
-                            verbose_name=("Informations légales"))
+    address = TextField(
+        null=True, verbose_name=("Adresse principale de votre société"))
+    phone = IntegerField(
+        unique=True, verbose_name=("Numero de tél de votre entreprise"))
+    email = CharField(
+        null=True, verbose_name=("Adresse électronique de votre entreprise"))
+    legal_infos = TextField(null=True, verbose_name=("Informations légales"))
     type_ = CharField(max_length=30, choices=TYPES, default=CLT)
-    picture = ForeignKeyField(FileJoin, null=True,
-                              related_name='file_joins_pictures',
-                              verbose_name=("image de la societe"))
+    picture = ForeignKeyField(
+        FileJoin, null=True, related_name='file_joins_pictures',
+        verbose_name=("image de la societe"))
 
     def invoices(self):
         return Invoice.select().where(Invoice.client == self)
@@ -270,7 +272,7 @@ class ProviderOrClient(BaseModel):
         return last_r.remaining if last_r else 0
 
     def __str__(self):
-        return u"{}, {}".format(self.name, self.phone)
+        return u"{}, {}".format(self.name.title(), self.phone)
 
     def __unicode__(self):
         return self.__str__()
@@ -308,6 +310,7 @@ class Invoice(BaseModel):
     tax_rate = IntegerField(
         null=True, verbose_name=("Taux"), default=18)
     paid_amount = IntegerField(verbose_name="Reste à payer")
+    date = DateTimeField(default=NOW)
 
     def __str__(self):
         return "{num}/{client}/{owner}".format(
@@ -320,10 +323,6 @@ class Invoice(BaseModel):
         self.owner = Owner.get(Owner.islog == True)
         super(Invoice, self).save()
 
-    # @property
-    # def clt_name(self):
-    #     return self.client.name
-
     @property
     def get_next_number(self):
         """ Get a valid number automatically incremented from
@@ -331,8 +330,8 @@ class Invoice(BaseModel):
         """
         number = 1
         if Invoice.select().count() > 1:
-            number = int(Invoice.select().order_by(Invoice.number.desc()
-                                                   ).get().number) + 1
+            number = int(Invoice.select().order_by(
+                Invoice.number.desc()).get().number) + 1
         return str(number)
 
     @property
@@ -369,8 +368,8 @@ class Invoice(BaseModel):
         print('Done d invoice')
 
     def display_name(self):
-        return u"Facture N: {num} de {client} au {date}".format(num=self.number,
-                                                                client=self.client, date=self.date.strftime("%c"))
+        return u"Facture N: {num} de {client} au {date}".format(
+            num=self.number, client=self.client, date=self.date.strftime("%c"))
 
 
 class Buy(BaseModel):
@@ -383,10 +382,23 @@ class Buy(BaseModel):
     owner = ForeignKeyField(Owner, verbose_name=("Utilisateur"))
     provd_or_clt = ForeignKeyField(ProviderOrClient,
                                    verbose_name=("Proprietaire"))
+    date = DateTimeField(default=NOW)
+    number = IntegerField()
 
     def __str__(self):
         return u"{owner}/{provd_or_clt}".format(
             owner=self.owner, provd_or_clt=self.provd_or_clt)
+
+    @property
+    def get_next_number(self):
+        """ Get a valid number automatically incremented from
+            the higher one.
+        """
+        number = 1
+        if Buy.select().count() > 1:
+            number = int(Buy.select().order_by(
+                Buy.number.desc()).get().number) + 1
+        return str(number)
 
     @property
     def items(self):
@@ -408,8 +420,8 @@ class Buy(BaseModel):
 
     @classmethod
     def last_prod_buy(cls, product=None):
-        return Report.filter(invoice=False,
-                             product=product).order_by(Report.date.desc()).get()
+        return Report.filter(
+            invoice=False, product=product).order_by(Report.date.desc()).get()
 
     def deletes_data(self):
         for rep in self.items:
@@ -476,10 +488,11 @@ class Report(BaseModel):
             return None
 
     def next_rpts(self):
-        return Report.select().filter(Report.product == self.product,
-                                      Report.store == self.store,
-                                      Report.date > self.date,
-                                      Report.deleted == False).order_by(Report.date.asc())
+        return Report.select().filter(
+            Report.product == self.product,
+            Report.store == self.store,
+            Report.date > self.date,
+            Report.deleted == False).order_by(Report.date.asc())
 
     def deletes_data(self):
         last = self.last_report
@@ -495,10 +508,12 @@ class Report(BaseModel):
     @property
     def last_report(self):
         try:
-            return Report.select().where(Report.product == self.product,
-                                         Report.store == self.store,
-                                         Report.date < self.date,
-                                         Report.deleted == False).order_by(Report.date.desc()).get()
+            return Report.select().where(
+                Report.product == self.product,
+                Report.store == self.store,
+                Report.date < self.date,
+                Report.deleted == False).order_by(
+                Report.date.desc()).get()
         except:
             return None
 
@@ -508,11 +523,13 @@ class Report(BaseModel):
 
     def last_selling_price(self):
         try:
-            last_selling_price = Report.select().where(Report.product == self.product,
-                                                       Report.type_ == Report.E,
-                                                       Report.store == self.store,
-                                                       Report.date < self.date,
-                                                       Report.deleted == False).order_by(Report.date.desc()).get().selling_price
+            last_selling_price = Report.select().where(
+                Report.product == self.product,
+                Report.type_ == Report.E,
+                Report.store == self.store,
+                Report.date < self.date,
+                Report.deleted == False).order_by(Report.date.desc()).get(
+            ).selling_price
         except Exception as e:
             print(e)
             last_selling_price = 0
@@ -532,6 +549,7 @@ class Refund(BaseModel):
     provider_client = ForeignKeyField(ProviderOrClient)
     date = DateTimeField(default=NOW)
     invoice = ForeignKeyField(Invoice, null=True)
+    buy = ForeignKeyField(Buy, null=True)
     amount = IntegerField(verbose_name="Montant")
     remaining = IntegerField(verbose_name="Reste à payer")
     type_ = CharField(verbose_name="Type d'opération")
@@ -607,4 +625,5 @@ class Refund(BaseModel):
             Refund.provider_client == self.provider_client)
 
     def refund_remaing(self):
-        return self.all_refund_by_clt_prov().order_by(Refund.date.desc()).get().remaining
+        return self.all_refund_by_clt_prov().order_by(Refund.date.desc()).get(
+        ).remaining

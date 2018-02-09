@@ -48,7 +48,7 @@ class PurchaseInvoiceWidget(FWidget):
             500, self.search_field.maximumSize().height())
         self.search_field.textChanged.connect(self.finder)
 
-        self.add_buy = Button(u"+ &Nouvel vente")
+        self.add_buy = Button(u"+ &Nouvel Achat")
         self.add_buy.clicked.connect(self.goto_add)
         self.add_buy.setFixedWidth(300)
 

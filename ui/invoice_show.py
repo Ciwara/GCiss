@@ -1,27 +1,19 @@
 #!usr/bin/env python
 # -*- encoding: utf-8 -*-
 # maintainer: Fad
-from __future__ import (
-    unicode_literals, absolute_import, division, print_function)
 
-from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout, QWidget, QDialog,
-                         QIcon, QGridLayout, QSplitter, QFrame, QMessageBox,
-                         QPushButton, QMenu, QCompleter, QPixmap)
-from PyQt4.QtCore import Qt
+from PyQt4.QtGui import (QVBoxLayout, QDialog,
+                         QIcon, QGridLayout, QMessageBox,
+                         QPushButton, QMenu)
 
-from configuration import Config
-from models import Invoice, Report
-from GCommon.tools.pdf_invoice import pdf_view
 # from tools.pdf import draw_pdf
 
 from Common.ui.util import formatted_number, is_int, uopen_file, show_date
 from Common.ui.common import FWidget, FLabel, Deleted_btt
 from Common.ui.table import FTableWidget, TotalsWidget
 
-try:
-    unicode
-except:
-    unicode = str
+from configuration import Config
+from models import Invoice, Report
 
 
 class ShowInvoiceViewWidget(QDialog, FWidget):
@@ -49,11 +41,11 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
         pdf_icon = QIcon.fromTheme(
             'document-del', QIcon(u"{}pdf.png".format(Config.img_cmedia)))
         self.button_pdf = QPushButton(pdf_icon, u"")
-        self.button_pdf.setFixedWidth(30)
-        self.button_pdf.setFixedHeight(30)
+        # self.button_pdf.setFixedWidth(30)
+        # self.button_pdf.setFixedHeight(30)
         self.button_xls = QPushButton(xls_bicon, u"")
-        self.button_xls.setFixedWidth(30)
-        self.button_xls.setFixedHeight(30)
+        # self.button_xls.setFixedWidth(30)
+        # self.button_xls.setFixedHeight(30)
         self.button_pdf.released.connect(self.printer_pdf)
         self.button_xls.released.connect(self.export_xls)
         self.button_dl = Deleted_btt(u"Annuler la facture")
@@ -66,7 +58,7 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
         editbox.addWidget(FLabel(u"Doit: %s " % self.invoice.client), 1, 0)
         editbox.addWidget(self.button_pdf, 0, 5)
         editbox.addWidget(self.button_dl, 0, 4)
-        editbox.addWidget(self.button_xls, 0, 6)
+        # editbox.addWidget(self.button_xls, 0, 6)
 
         vbox.addLayout(editbox)
         vbox.addWidget(self.table_show)
@@ -79,7 +71,7 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
         table = self.table_show
         hheaders = table.hheaders[:-1]
         data = table.data
-        endrowx = len(hheaders) - 1
+        # endrowx = len(hheaders) - 1
         dict_data = {
             'file_name': "facture n {}".format(self.invoice.number),
             'headers': hheaders,
@@ -102,8 +94,11 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
         export_dynamic_data(dict_data)
 
     def printer_pdf(self):
-        # pdf_report = draw_pdf(self.invoice)
-        pdf_report = pdf_view("invoice", self.invoice)
+
+        from GCommon.tools.pdf_invoice import pdf_view
+        import os
+        pdf_report = pdf_view(os.path.join(
+            Config.OUT, "invoice"), self.invoice)
         uopen_file(pdf_report)
 
     def cancellation(self):
@@ -197,7 +192,7 @@ class ShowOrderTableWidget(FTableWidget):
         self.setRowCount(nb_rows + 2)
 
         self.montant_ht = 0
-        for row_num in xrange(0, self.data.__len__()):
+        for row_num in range(0, self.data.__len__()):
             self.montant_ht += (is_int(self.item(row_num, 0).text())
                                 * is_int(self.item(row_num, 2).text()))
         row_num += 1
@@ -217,7 +212,7 @@ class ShowOrderTableWidget(FTableWidget):
             liste_item = []
             try:
                 liste_item.append(is_int(self.item(i, 0).text()))
-                liste_item.append(unicode(self.item(i, 1).text()))
+                liste_item.append(str(self.item(i, 1).text()))
                 liste_item.append(is_int(self.item(i, 2).text()))
                 liste_item.append(is_int(self.item(i, 3).text()))
                 list_invoice.append(liste_item)

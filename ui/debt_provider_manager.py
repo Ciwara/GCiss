@@ -9,7 +9,7 @@ from PyQt4.QtGui import (QSplitter, QHBoxLayout,
 from PyQt4.QtCore import Qt, QSize
 
 from Common.models import Organization
-from models import ProviderOrClient, Refund
+from models import ProviderOrClient, Refund, Buy
 
 from Common.ui.common import FWidget, LineEdit, FLabel
 from Common.ui.table import FTableWidget
@@ -29,7 +29,7 @@ class DebtsProviderViewWidget(FWidget):
                                                       *args, **kwargs)
         self.parent = parent
         self.parentWidget().setWindowTitle(
-            Organization.get(id=1).name_orga + u"Gestion des dettes")
+            Organization.get(id=1).name_orga + u" Gestion dette fournisseur")
 
         hbox = QHBoxLayout(self)
         # self.balace_box = QGridLayout(self)
@@ -67,7 +67,8 @@ class DebtsProviderViewWidget(FWidget):
     def new_refund(self, provid_clt):
         from ui.refund_edit_add import RefundEditAddDialog
         self.parent.open_dialog(
-            RefundEditAddDialog, modal=True, type_=Refund.RB, provid_clt=provid_clt, table_p=self.table_debt)
+            RefundEditAddDialog, modal=True, type_=Refund.RB,
+            provid_clt=provid_clt, table_p=self.table_debt)
 
 
 class ProviderOrClientTableWidget(QListWidget):
@@ -80,7 +81,7 @@ class ProviderOrClientTableWidget(QListWidget):
         self.parent = parent
         self.setAutoScroll(True)
         # self.setAutoFillBackground(True)
-        self.itemSelectionChanged.connect(self.handleClicked)
+        self.itemSelectionChanged.connect(self.handle_clicked)
         self.refresh_()
         # self.setStyleSheet("QListWidget::item { border-bottom: 1px; }")
 
@@ -103,7 +104,8 @@ class ProviderOrClientTableWidget(QListWidget):
                 self.parent.new_refund(provid_clt)
             else:
                 self.parent.parent.Notify(
-                    "Le client {} n'est pas endetté".format(self.item(row).text()), "error")
+                    "Le fournisseur {} n'est pas endetté".format(
+                        self.item(row).text()), "error")
         if action == editaction:
             from GCommon.ui.provider_client_edit_add import EditOrAddClientOrProviderDialog
             self.parent.open_dialog(
@@ -121,7 +123,7 @@ class ProviderOrClientTableWidget(QListWidget):
         for provid_clt in qs:
             self.addItem(ProviderOrClientQListWidgetItem(provid_clt))
 
-    def handleClicked(self):
+    def handle_clicked(self):
         self.provid_clt = self.currentItem()
         self.parent.table_debt.refresh_(
             provid_clt_id=self.provid_clt.provid_clt_id)
@@ -138,8 +140,9 @@ class ProviderOrClientQListWidgetItem(QListWidgetItem):
 
         if not isinstance(self.provid_clt, str):
             icon.addPixmap(QPixmap("{}.png".format(
-                Config.img_media + "debt_provider" if self.provid_clt.is_indebted(
-                ) else Config.img_cmedia + "user_active")),
+                Config.img_media + "debt_provider"
+                if self.provid_clt.is_indebted()
+                else Config.img_cmedia + "user_active")),
                 QIcon.Normal, QIcon.Off)
 
         self.setIcon(icon)
@@ -177,7 +180,7 @@ class DebtsTableWidget(FTableWidget):
 
         self.parent = parent
         self.hheaders = [
-            "", "type", u"Date", u"Numéro", u"Montant", u"Reste à payé"]
+            "", "type", u"Date", "Numéro", u"Montant", u"Reste à payé"]
 
         self.setDragEnabled(True)
         self.stretch_columns = [0, 1]
@@ -204,8 +207,9 @@ class DebtsTableWidget(FTableWidget):
                                     table_p=self)
         if action == edit_refund:
             from ui.refund_edit_add import RefundEditAddDialog
-            self.parent.open_dialog(RefundEditAddDialog, modal=True,
-                                    type_=Refund.RB, refund=refund, table_p=self)
+            self.parent.open_dialog(
+                RefundEditAddDialog, modal=True,
+                type_=Refund.RB, refund=refund, table_p=self)
 
     def refresh_(self, provid_clt_id=None, search=None):
         self._reset()
@@ -229,34 +233,40 @@ class DebtsTableWidget(FTableWidget):
 
         self.remaining = 0
         if isinstance(provid_clt_id, int):
+            self.provid = ProviderOrClient.get(id=provid_clt_id)
             qs = qs.select().where(
-                Refund.provider_client == ProviderOrClient.get(id=provid_clt_id))
+                Refund.provider_client == self.provid)
         else:
+            self.provid = "Tous"
             for prov in ProviderOrClient.select().where(
-                    ProviderOrClient.type_ == ProviderOrClient.FSEUR):
+                    ProviderOrClient.type_ == ProviderOrClient.CLT):
                 self.remaining += prov.last_remaining()
         self.parent.remaining_box.setText(
             self.display_remaining(formatted_number(self.remaining)))
 
-        self.data = [(ref.id, ref.type_, ref.date, ref.invoice.number,
+        self.data = [(ref.id, ref.type_, ref.date, ref.buy.number,
                       ref.amount, ref.remaining) for ref in qs.iterator()]
-        print("DATA ", self.data)
 
     def extend_rows(self):
         if isinstance(self.provid_clt_id, int):
-            self.remaining = is_int(self.item(0, 5).text())
             self.parent.remaining_box.setText(
                 self.display_remaining(formatted_number(self.remaining)))
+            self.remaining = is_int(self.item(0, 5).text())
+            # print("remaining : ", self.remaining)
+
+        self.parent.remaining_box.setText(
+            self.display_remaining(formatted_number(self.remaining)))
 
     def _item_for_data(self, row, column, data, context=None):
         if column == 0:
-            return QTableWidgetItem(QIcon(u"{}find.png".format(Config.img_cmedia)), "")
+            return QTableWidgetItem(QIcon(u"{}find.png".format(
+                Config.img_cmedia)), "")
         if column == 1 and self.data[row][1] == Refund.RB:
-            return QTableWidgetItem(QIcon(u"{img_media}{img}".format(img_media=Config.img_media,
-                                                                     img="in.png")), u"")
+            return QTableWidgetItem(QIcon(u"{img_media}{img}".format(
+                img_media=Config.img_media, img="out.png")), u"")
         if column == 1 and self.data[row][1] == Refund.DT:
-            return QTableWidgetItem(QIcon(u"{img_media}{img}".format(img_media=Config.img_media,
-                                                                     img="out.png")), u"")
+            return QTableWidgetItem(QIcon(u"{img_media}{img}".format(
+                img_media=Config.img_media, img="in.png")), u"")
         return super(DebtsTableWidget, self)._item_for_data(row, column,
                                                             data, context)
 
@@ -264,14 +274,15 @@ class DebtsTableWidget(FTableWidget):
         if column != 0:
             return
 
-        from ui.invoice_show import ShowInvoiceViewWidget
+        from ui.buy_show import BuyShowViewWidget
         try:
-            self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
-                                    table_p=self, invoice_num=self.data[row][3])
+            self.parent.open_dialog(
+                BuyShowViewWidget, modal=True, opacity=100,
+                table_p=self, buy=Buy.get(id=self.data[row][0]))
         except Exception as e:
             print(e)
 
     def display_remaining(self, text):
         return """
-        <h2>Dette restante: <b>{}</b> Fcfa </h2>
-        """.format(text)
+        <h2>Dette restante du fournisseur {}: <b>{}</b> Fcfa </h2>
+        """.format(self.provid, text)

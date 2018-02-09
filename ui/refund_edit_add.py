@@ -13,7 +13,7 @@ from Common.ui.util import (check_is_empty, is_valide_codition_field,
 from Common.ui.common import (
     FWidget, Button_save, FormLabel, IntLineEdit, FormatDate)
 
-from models import Refund
+from models import Refund, ProviderOrClient
 
 
 class RefundEditAddDialog(QDialog, FWidget):
@@ -48,6 +48,8 @@ class RefundEditAddDialog(QDialog, FWidget):
             self.last_r = Refund.select().where(
                 Refund.provider_client == provid_clt).order_by(
                 Refund.date.desc()).get()
+
+        # print(self.last_r, "EEE")
 
         self.setWindowTitle(self.title)
         self.amount_field = IntLineEdit(str(self.amount))
@@ -93,18 +95,24 @@ class RefundEditAddDialog(QDialog, FWidget):
                 self.amount_field, "Ce montant ne peut être supperieur au dettes restante {}.".format(
                 self.last_remaining), amount > self.last_remaining):
             return
+
         refund = self.refund
         refund.type_ = self.type_
-        refund.invoice = self.last_r.invoice
+        if self.provid_clt.type_ == ProviderOrClient.CLT:
+            refund.invoice = self.last_r.invoice
+        else:
+            refund.buy = self.last_r.buy
         refund.amount = amount
+
         if self.new:
             refund.provider_client = self.provid_clt
             refund.date = date_to_datetime(refund_date)
         try:
             refund.save()
             self.close()
-            self.parent.Notify(u"le {type} {lib} à été enregistré avec succès".format(
-                type=self.type_, lib=amount), "success")
+            self.parent.Notify(
+                u"le {type} {lib} à été enregistré avec succès".format(
+                    type=self.type_, lib=amount), "success")
             self.table_p.refresh_(provid_clt_id=self.provid_clt.id)
         except Exception as e:
             self.parent.Notify(e, "error")

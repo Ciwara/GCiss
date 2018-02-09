@@ -131,8 +131,6 @@ class InvoiceViewWidget(FWidget):
 
     def save_b(self):
         ''' add operation '''
-        # entete de la facture
-        print("save")
 
         invoice_date = str(self.invoice_date.text())
         num_invoice = int(self.num_invoice.text())
@@ -197,7 +195,6 @@ class InvoiceViewWidget(FWidget):
             self.parent.Notify(lis_error, "error")
             return False
         else:
-            self.parent.Notify("Facture Enregistrée avec succès", "success")
             # self.table_invoice._reset()
             # try:
             #     self.parent.open_dialog(
@@ -206,9 +203,8 @@ class InvoiceViewWidget(FWidget):
             # except Exception as e:
             #     print(e)
 
-            self.parent.Notify(
-                "L'entrée des articles avec succès", "success")
             self.change_main_context(SaleProducteWidget)
+            self.parent.Notify("Facture Enregistrée avec succès", "success")
 
 
 class ResultatTableWidget(FTableWidget):
@@ -366,14 +362,19 @@ class InvoiceTableWidget(FTableWidget):
             last_report = product.last_report
             last_price = product.last_price()
             qtremaining = last_report.remaining
-            selling_price = last_price
+            # selling_price = last_price
             # invoice_date = str(self.parent.invoice_date.text())
             qtsaisi = is_int(self.cellWidget(row_num, 1).text())
             pusaisi = is_int(self.cellWidget(row_num, 2).text())
 
+            if check_is_empty(self.parent.num_invoice):
+                return
+            if check_is_empty(self.parent.name_client_field.lineEdit()):
+                return
             # if is_valide_codition_field(self.parent.invoice_date,
             #                "Le {} est Inférieure à la date de la dernière rapport (<b>{}</b>)".format(date_to_datetime(invoice_date), last_report.date), (last_report.date > date_to_datetime(invoice_date))):
             #     return
+
             if (pusaisi and check_is_empty(self.cellWidget(row_num, 1))):
                 return
             if (pusaisi and check_is_empty(self.cellWidget(row_num, 2))):
@@ -394,11 +395,6 @@ class InvoiceTableWidget(FTableWidget):
             self.setItem(row_num, 3, TotalsWidget(formatted_number(montant)))
 
             self._update_data(row_num, [qtsaisi, pusaisi, self.mtt_ht])
-
-            if check_is_empty(self.parent.num_invoice):
-                return
-            if check_is_empty(self.parent.name_client_field.lineEdit()):
-                return
 
         self.setItem(
             row_num + 1, 3, TotalsWidget(formatted_number(self.mtt_ht)))

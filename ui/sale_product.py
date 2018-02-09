@@ -2,8 +2,6 @@
 # -*- encoding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 # maintainer: Fad
-from __future__ import (
-    unicode_literals, absolute_import, division, print_function)
 
 from PyQt4.QtGui import (QVBoxLayout, QIcon, QTableWidgetItem, QGridLayout)
 
@@ -36,7 +34,7 @@ class SaleProducteWidget(FWidget):
         table_invoice = QVBoxLayout()
         editbox = QGridLayout()
 
-        self.add_invoice = Button(u"+ &Nouvel Achat")
+        self.add_invoice = Button(u"+ &Nouvel Vente")
         self.add_invoice.clicked.connect(self.goto_add)
         self.add_invoice.setFixedWidth(300)
         self.search_field = LineEdit()

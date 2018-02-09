@@ -119,8 +119,17 @@ class BuyViewWidget(FWidget):
         # entete de la facture
         date = str(self.date.text())
         values_t = self.table_buy.get_table_items()
+
+        try:
+            next_number = int(
+                Buy.select().order_by(Buy.number.desc()).get(
+                ).number) + 1
+        except:
+            next_number = 1
+
         buy = Buy()
         # buy.date = datetime_
+        buy.number = next_number
         lis_error = []
         try:
             self.owner = Owner.get(Owner.islog == True)
@@ -149,7 +158,7 @@ class BuyViewWidget(FWidget):
                 Refund(
                     type_=Refund.DT, owner=self.owner, amount=paid_amount,
                     date=date_to_datetime(date), provider_client=provid,
-                    invoice=Buy.get(id=buy.id)).save()
+                    buy=Buy.get(number=buy.number)).save()
             err = False
         except:
             raise
@@ -177,9 +186,9 @@ class BuyViewWidget(FWidget):
                         u"enregistré dans les rapports")
             return False
         else:
-            self.parent.Notify(
-                "L'entrée des articles avec succès", "success")
-        self.change_main_context(PurchaseInvoiceWidget)
+            self.change_main_context(PurchaseInvoiceWidget)
+            # self.parent.Notify(
+            #     "L'entrée des articles avec succès", "success")
 
 
 class BuyTableWidget(FTableWidget):
@@ -234,7 +243,7 @@ class BuyTableWidget(FTableWidget):
 
     def extend_rows(self):
         bicon = QIcon.fromTheme('', QIcon(u"{}".format(Config.img_cmedia)))
-        self.paid_amount_field = IntLineEdit()
+        self.paid_amount_field = IntLineEdit("0")
         nb_rows = self.rowCount()
 
         self.setRowCount(nb_rows + 3)
@@ -304,6 +313,8 @@ class BuyTableWidget(FTableWidget):
             cost_buying = is_int(self.cellWidget(row_num, 2).text())
             selling_price = is_int(self.cellWidget(row_num, 3).text())
 
+            if check_is_empty(self.parent.name_client_field.lineEdit()):
+                return
             if (qtsaisi and check_is_empty(self.cellWidget(row_num, 1))):
                 return
             if (qtsaisi and check_is_empty(self.cellWidget(row_num, 2))):
@@ -326,8 +337,6 @@ class BuyTableWidget(FTableWidget):
             self._update_data(row_num, [
                 qtsaisi, cost_buying, selling_price, v_amount, b_f_u, b_f])
 
-            if check_is_empty(self.parent.name_client_field.lineEdit()):
-                return
         row_num += 1
         self.setItem(row_num, 4, TotalsWidget(formatted_number(v_amount_tt)))
         self.setItem(row_num, 6, TotalsWidget(formatted_number(b_f_tt)))
