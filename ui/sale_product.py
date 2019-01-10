@@ -172,7 +172,7 @@ class InvoiceTableWidget(FTableWidget):
         if column != last_column:
             return
 
-        from ui.invoice_show import ShowInvoiceViewWidget
+        from ui.show_invoice import ShowInvoiceViewWidget
         try:
             self.parent.open_dialog(
                 ShowInvoiceViewWidget, modal=True, opacity=100,

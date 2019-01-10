@@ -21,20 +21,18 @@ class ResultatTableWidget(FTableWidget):
         FTableWidget.__init__(self, parent=parent, *args, **kwargs)
 
         self.parent = parent
-        self.hheaders = [u"Produits", u"Ajouter"]
-        self.stretch_columns = [0]
+        self.hheaders = [u"Articles", u"Ajouter"]
+        # self.stretch_columns = [0, 1]
         self.align_map = {0: 'l', 1: 'r'}
-        # self.display_fixed = True
+        self.display_fixed = True
         self.refresh_()
 
     def refresh_(self, value=None):
 
         self._reset()
         self.set_data_for(value)
+        self.setColumnWidth(1, 100)
         self.refresh()
-        pw = (self.width()) * 2 - 20
-        self.setColumnWidth(0, pw)
-        self.setColumnWidth(1, 20)
 
     def set_data_for(self, prod_find):
 

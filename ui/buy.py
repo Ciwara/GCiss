@@ -247,8 +247,10 @@ class BuyTableWidget(FTableWidget):
         nb_rows = self.rowCount()
 
         self.setRowCount(nb_rows + 3)
-        self.setSpan(nb_rows, 0, 3, 5)
-        self.setItem(nb_rows, 5, TotalsWidget(u"Montant"))
+        self.setSpan(nb_rows, 0, 2, 1)
+        self.setItem(nb_rows, 0, TotalsWidget(u"Montant"))
+        self.setItem(nb_rows, 2, TotalsWidget(formatted_number(u"%d" % 0)))
+        self.setItem(nb_rows, 3, TotalsWidget(formatted_number(u"%d" % 0)))
         self.setItem(nb_rows, 6, TotalsWidget(formatted_number(u"%d" % 0)))
         nb_rows += 1
         # self.setSpan(nb_rows, 0, 1, 6)
@@ -305,7 +307,8 @@ class BuyTableWidget(FTableWidget):
         """ Calcule les Resultat """
         b_f_tt = 0
         v_amount_tt = 0
-
+        r_amount_tt = 0
+        b_f_ut = 0
         self.button.setEnabled(False)
         for row_num in range(0, self.data.__len__()):
 
@@ -328,7 +331,9 @@ class BuyTableWidget(FTableWidget):
             b_f_u = b_f / qtsaisi
 
             b_f_tt += b_f
+            b_f_ut += b_f_u
             v_amount_tt += v_amount
+            r_amount_tt += r_amount
             # montt.setTextAlignment(Qt.AlignRight)
             self.setItem(row_num, 4, TotalsWidget(formatted_number(v_amount)))
             self.setItem(row_num, 5, TotalsWidget(formatted_number(b_f_u)))
@@ -338,6 +343,8 @@ class BuyTableWidget(FTableWidget):
                 qtsaisi, cost_buying, selling_price, v_amount, b_f_u, b_f])
 
         row_num += 1
+        self.setItem(row_num, 2, TotalsWidget(formatted_number(r_amount_tt)))
+        self.setItem(row_num, 3, TotalsWidget(formatted_number(v_amount_tt)))
         self.setItem(row_num, 4, TotalsWidget(formatted_number(v_amount_tt)))
         self.setItem(row_num, 6, TotalsWidget(formatted_number(b_f_tt)))
 

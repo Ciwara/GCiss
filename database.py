@@ -27,32 +27,4 @@ class Setup(AdminDatabase):
         self.LIST_CREAT.append(Category)
         self.LIST_CREAT.append(Payment)
         self.LIST_CREAT.append(Refund)
-        self.LIST_CREAT.append(Report)
         self.LIST_CREAT.append(ProviderOrClient)
-
-
-# def setup(drop_tables=False):
-#     """ create tables if not exist """
-#     did_create = False
-
-#     for model in [Owner, Store, Product, Report, Category, Invoice, Buy,
-#                   Payment, SettingsAdmin, Organization, Version, Refund,
-#                   ProviderOrClient, FileJoin]:
-#         if drop_tables:
-#             model.drop_table()
-#         if not model.table_exists():
-#             model.create_table()
-#             did_create = True
-
-#     if did_create:
-#         from fixture import FixtInit
-#         FixtInit().create_all_or_pass()
-
-# setup()
-
-# with dbh.transaction():
-
-#     migrate(
-#         migrator.rename_column('story', 'pub_date', 'publish_date'),
-#         migrator.rename_column('story', 'mod_date', 'modified_date'),
-#     )

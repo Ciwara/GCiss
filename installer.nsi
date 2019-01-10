@@ -6,11 +6,12 @@
 
   !define MUI_PRODUCT "GStock"
   !define MUI_FILE "main"
-  !define MUI_VERSION "18.2.8"
+  !define MUI_VERSION "18.4.7.1"
   !define MUI_BRANDINGTEXT "${MUI_PRODUCT} ${MUI_VERSION}"
   !define IMAGES "images"
   !define CIMAGES "cimages"
   !define MEDIA "static"
+  !define OUT "Out"
   !define TEMPLATES "templates"
   !define CIMAGES_PATH "C:\Users\fadiga\Documents\GitHub\Common\${CIMAGES}"
   ;CRCCheck On
@@ -35,12 +36,10 @@
 
   InstallDir "C:\${MUI_PRODUCT}"
 
-
 ;--------------------------------
 ;Data
 
   ;LicenseData "README.txt"
-
 
 ;--------------------------------
 ;Installer Sections
