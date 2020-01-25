@@ -80,10 +80,10 @@ def pdf_view(invoice):
             ht += montant
             cpt += 1
 
-        ht_en_lettre = num2words(ht)
+        ht_en_lettre = num2words(ht, lang='fr')
         p.drawRightString(555, 223, str(formatted_number(ht)))
         ht_en_lettre1, ht_en_lettre2 = controle_caratere(
-            "Arrêté la présente facture à la somme de : " + ht_en_lettre +
+            "Arrêté la présente facture à la somme de : " + ht_en_lettre.title() +
             " francs CFA", 10, 90)
         p.drawString(50, 176, (ht_en_lettre1))
         p.drawString(55, 160, (ht_en_lettre2))

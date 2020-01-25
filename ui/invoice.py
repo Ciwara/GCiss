@@ -47,10 +47,9 @@ class InvoiceViewWidget(FWidget):
         self.num_invoice = IntLineEdit(str(next_number))
         self.num_invoice.setToolTip(u"Le numéro")
         self.num_invoice.setMaximumSize(
-            40, self.num_invoice.maximumSize().height())
+            200, self.num_invoice.maximumSize().height())
         self.invoice_date = FormatDate(QDate.currentDate())
         # self.name_client_field = LineEdit()
-
         self.string_list = [""] + ["{},{}".format(clt.name, clt.phone)
                                    for clt in ProviderOrClient.select().where(
             ProviderOrClient.type_ == ProviderOrClient.CLT).order_by(ProviderOrClient.name.desc())]
@@ -60,7 +59,7 @@ class InvoiceViewWidget(FWidget):
         self.name_client_field.addItems(self.string_list)
 
         self.name_client_field.setMaximumSize(
-            200, self.name_client_field.maximumSize().height())
+            400, self.name_client_field.maximumSize().height())
         self.name_client_field.setToolTip("Nom, numero du client")
 
         self.add_clt_btt = BttSmall(u"+")

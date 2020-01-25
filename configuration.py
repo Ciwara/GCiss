@@ -27,7 +27,7 @@ class Config(Constants):
         DB_VERS = Version().get(Version.number == 1)
     except Exception as e:
         print(e)
-        DB_VERS = 1
+        DB_VERS = 20
     try:
         sttg = Organization().get(Organization.id == 1)
         # LOGIN = sttg.login

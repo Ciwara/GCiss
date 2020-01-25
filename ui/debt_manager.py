@@ -182,7 +182,7 @@ class DebtsTableWidget(FTableWidget):
         self.align_map = {0: 'l', 1: "l", 2: "l", 3: "r", 4: "r", 5: "r"}
         self.display_vheaders = True
         self.display_fixed = True
-        self.refresh_()
+        # self.refresh_()
 
     def popup(self, pos):
         row = self.selectionModel().selection().indexes()[0].row()

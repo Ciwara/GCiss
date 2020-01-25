@@ -14,7 +14,6 @@ class Constants(CConstants):
         CConstants.__init__(self)
 
     # des_image_record = "static/img_prod"
-
     ROOT_DIR = os.path.dirname(os.path.abspath('__file__'))
     ARMOIRE = "img_prod"
     des_image_record = os.path.join(ROOT_DIR, ARMOIRE)
@@ -28,13 +27,13 @@ class Constants(CConstants):
     DOC_SUPPORT = "*.gif *.png *.jpg *.doc *.docx *.pdf *.jpeg"
     # -------- Application -----------#
 
-    NAME_MAIN = "bmain.py"
+    NAME_MAIN = "main.py"
     M_GESTION = u"Gestion de Stock"
     pdf_source = "pdf_source.pdf"
     APP_NAME = M_GESTION
 
-    APP_VERSION = u"8.0.2"
-    APP_DATE = u"02/2013"
+    APP_VERSION = u"20.0"
+    APP_DATE = u"01/2020"
     img_media = os.path.join(ROOT_DIR, "static", "images/")
     APP_LOGO = os.path.join(img_media, "logo.png")
     APP_LOGO_ICO = os.path.join(img_media, "logo.ico")
