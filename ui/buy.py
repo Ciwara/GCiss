@@ -24,7 +24,6 @@ from GCommon.ui._product_detail import InfoTableWidget
 from ui._resultat_table import ResultatTableWidget
 from ui.buy_show import BuyShowViewWidget
 
-
 try:
     unicode
 except:
@@ -39,14 +38,15 @@ class BuyViewWidget(FWidget):
             Config.APP_NAME + u"    Arrivage d'article")
         self.parent = parent
 
-        vbox = QVBoxLayout(self)
-        hbox = QHBoxLayout(self)
+        vbox = QVBoxLayout()
+        hbox = QHBoxLayout()
         editbox = QGridLayout()
 
         self.date = FormatDate(QDate.currentDate())
         self.name_client = LineEdit()
         self.search_field = LineEdit()
         self.search_field.setPlaceholderText("Rechercher un article")
+        self.search_field.setMaximumHeight(40)
         self.search_field.textChanged.connect(self.finder)
         # self.search_field.setFixedWidth(200)
 

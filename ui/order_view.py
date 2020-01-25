@@ -14,12 +14,11 @@ from configuration import Config
 from models import Product
 
 from Common.ui.table import FTableWidget
-from Common.ui.util import raise_success, raise_error, date_to_datetime
-from Common.ui.common import (FWidget, FPageTitle, FormLabel, BttExportXLS,
-                              IntLineEdit, Button_save, FormatDate, Deleted_btt)
+from Common.ui.util import date_to_datetime
+from Common.ui.common import (FWidget, FPageTitle, FormLabel, BttExportXLSX,
+                              IntLineEdit, FormatDate, DeletedBtt)
 
 from ui.order_remove_save import OrderRemoveWidget
-from tools.export_xls import write_order_xls
 
 
 class OrderViewWidget(FWidget):
@@ -31,22 +30,23 @@ class OrderViewWidget(FWidget):
         super(OrderViewWidget, self).__init__(parent=parent, *args, **kwargs)
 
         self.order_table = OrederTableWidget(parent=self)
-        self.parentWidget().setWindowTitle(Config.NAME_ORGA + u"    COMMANDE")
+        self.parentWidget().setWindowTitle(
+            "{} {}".format(Config.APP_NAME, "COMMANDE"))
 
         self.title = FPageTitle(u"Faire une Commande")
 
         self.com_date = FormatDate(QDate.currentDate())
         vbox = QVBoxLayout()
 
-        self.export_xls_btt = BttExportXLS(u"Exporter")
+        self.export_xls_btt = BttExportXLSX(u"Exporter")
         self.connect(self.export_xls_btt, SIGNAL('clicked()'),
                      self.export_xls_order)
 
-        # self.save_order_btt = Button_save(u"enregistre")
+        # self.save_order_btt = ButtonSave(u"enregistre")
         # self.connect(self.save_order_btt, SIGNAL('clicked()'),
         #              self.save_order)
 
-        self.restor_order_btt = Deleted_btt(u"vider")
+        self.restor_order_btt = DeletedBtt(u"vider")
         self.connect(self.restor_order_btt, SIGNAL('clicked()'),
                      self.remove_save)
 

@@ -13,7 +13,7 @@ from PyQt4.QtCore import QDate, Qt
 from configuration import Config
 from database import Report, Product
 
-from Common.ui.common import (FWidget, FPageTitle, FormLabel, BttExportXLS,
+from Common.ui.common import (FWidget, FPageTitle, FormLabel, BttExportXLSX,
                               Button, FormatDate, IntLineEdit)
 from Common.ui.table import FTableWidget, TotalsWidget
 from Common.ui.util import formatted_number, is_int, date_to_datetime
@@ -36,7 +36,7 @@ class InventoryViewWidget(FWidget):
         self.end_date = FormatDate(QDate.currentDate())
         self.button = Button(u"Ok")
         self.button.clicked.connect(self.rapport_filter)
-        self.btt_export = BttExportXLS(u"Exporter")
+        self.btt_export = BttExportXLSX(u"Exporter")
         self.btt_export.clicked.connect(self.export_xls)
 
         self.invent_table = InventaireTableWidget(parent=self)
@@ -65,16 +65,17 @@ class InventoryViewWidget(FWidget):
         self.refresh()
 
     def export_xls(self):
-        from Common.exports_xls import export_dynamic_data
+        from Common.exports_xlsx import export_dynamic_data
         table = self.invent_table
         hheaders = table.hheaders
         dict_data = {
-            'file_name': "Inventaire.xls",
+            'file_name': "Inventaire",
             'headers': hheaders,
             'data': table.data,
             "extend_rows": [(3, table.sum_totals), ],
             'sheet': self.title,
-            'title': self.title,
+            # 'title': self.title,
+            'format_money': ["C:C", "D:D", ],
             'widths': table.stretch_columns,
             "date": "Du {} au {}".format(
                 date_to_datetime(self.on_date.text()).strftime(u'%d/%m/%Y'),

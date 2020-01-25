@@ -4,20 +4,20 @@
 from __future__ import (
     unicode_literals, absolute_import, division, print_function)
 
-import os
+# import os
 
 from PyQt4.QtCore import Qt, QDate
 from PyQt4.QtGui import (QIcon, QVBoxLayout, QFileDialog, QDialog, QTextEdit,
                          QIntValidator, QFormLayout, QPushButton, QCompleter)
 
-from configuration import Config
+# from configuration import Config
 
 from Common.ui.util import (
     check_is_empty, check_field, date_to_datetime, formatted_number)
+
 from Common.ui.common import (
-    FWidget, FPageTitle, Button_save, FormLabel, FLabel, LineEdit, IntLineEdit,
-    Warning_btt, FormatDate)
-from Common import peewee
+    FWidget, FPageTitle, ButtonSave, FormLabel, FLabel, LineEdit, IntLineEdit,
+    WarningBtt, FormatDate)
 from models import Refund
 
 
@@ -64,7 +64,6 @@ class RefundEditAddDialog(QDialog, FWidget):
 
         vbox = QVBoxLayout()
         self.last_remaining = self.last_r.refund_remaing()
-        print(self.last_remaining)
         # try:
         #     self.last_r.refund_remaing()
         # self.remaining = self.last_r.remaining
@@ -78,11 +77,11 @@ class RefundEditAddDialog(QDialog, FWidget):
         formbox.addRow(FormLabel("Client :"),
                        FormLabel(self.provid_clt.name))
         formbox.addRow(FormLabel("Dette restante :"),
-                       FormLabel(str(formatted_number(self.last_remaining)) + Config.DEVISE))
+                       FormLabel(str(formatted_number(self.last_remaining))))
         formbox.addRow(FormLabel(u"Date : *"), self.refund_date_field)
         formbox.addRow(FormLabel(u"Montant : *"), self.amount_field)
 
-        butt = Button_save(u"Enregistrer")
+        butt = ButtonSave(u"Enregistrer")
         butt.clicked.connect(self.save_edit)
         formbox.addRow("", butt)
         # formbox.addRow("", "Le client {} n'est pas endetté")
@@ -116,6 +115,6 @@ class RefundEditAddDialog(QDialog, FWidget):
             self.close()
             self.parent.Notify(u"le {type} {lib} à été enregistré avec succès".format(
                 type=self.type_, lib=amount), "success")
-            self.table_p.refresh_(self.provid_clt.id)
+            self.table_p.refresh_(provid_clt_id=self.provid_clt.id)
         except Exception as e:
             self.parent.Notify(e, "error")

@@ -5,12 +5,12 @@
 from __future__ import (
     unicode_literals, absolute_import, division, print_function)
 
-from PyQt4.QtGui import (QIcon, QVBoxLayout,
+from PyQt4.QtGui import (QIcon, QVBoxLayout, QDialog,
                          QGridLayout, QMenu, QPushButton, QMessageBox)
 from PyQt4.QtCore import Qt
 
 from Common.ui.util import formatted_number, is_int, show_date
-from Common.ui.common import FWidget, FLabel, FPageTitle, BttExportXLS, Deleted_btt
+from Common.ui.common import FWidget, FLabel, FPageTitle, BttExportXLSX, DeletedBtt
 from Common.ui.table import FTableWidget, TotalsWidget
 
 from configuration import Config
@@ -19,27 +19,29 @@ from models import Buy, Report, Store
 from data_helper import check_befor_update_data
 
 
-class BuyShowViewWidget(FWidget):
+class BuyShowViewWidget(QDialog, FWidget):
 
-    def __init__(self, buy="", parent=0, *args, **kwargs):
-        super(BuyShowViewWidget, self).__init__(parent=parent,
-                                                *args, **kwargs)
-        self.buy = buy
-
+    def __init__(self, table_p, buy="", parent=0, *args, **kwargs):
+        # super(BuyShowViewWidget, self).__init__(parent=parent,
+        #                                         *args, **kwargs)
+        QDialog.__init__(self, parent, *args, **kwargs)
         self.parentWidget().setWindowTitle(Config.APP_NAME +
                                            u"  CONSULTATION DES ACHAT")
 
         self.parent = parent
+        self.buy = buy
+        self.table_p = table_p
         self.title = "Arivage"
+
         vbox = QVBoxLayout()
         vbox.addWidget(FPageTitle(self.title))
 
         self.table_show = ShowBuyTableWidget(parent=self)
 
         editbox = QGridLayout()
-        self.btt_export = BttExportXLS(u"Exporter")
+        self.btt_export = BttExportXLSX("")
         self.btt_export.clicked.connect(self.export_xls)
-        self.button_dl = Deleted_btt(u"Annuler la facture")
+        self.button_dl = DeletedBtt(u"Annuler la facture")
         self.button_dl.released.connect(self.cancellation)
 
         editbox.addWidget(FLabel(u"<b>Achat N°: </b>%s" % self.buy.id), 0, 0)
@@ -54,21 +56,22 @@ class BuyShowViewWidget(FWidget):
         self.setLayout(vbox)
 
     def export_xls(self):
-        from Common.exports_xls import export_dynamic_data
+        from Common.exports_xlsx import export_dynamic_data
         table = self.table_show
         hheaders = table.hheaders[:-1]
         dict_data = {
-            'file_name': "arivage.xls",
+            'file_name': "arivage",
             'headers': hheaders,
-            'data': self.table_show.data,
-            "extend_rows": [(4, self.table_show.v_amount_tt),
+            'data': table.data,
+            "extend_rows": [(4, table.v_amount_tt),
                             (5, ""),
-                            (6, self.table_show.b_f_tt)],
+                            (6, table.b_f_tt)],
             'sheet': self.title,
-            'title': self.title,
-            'widths': self.table_show.stretch_columns,
+            # 'title': self.title,
+            'format_money': ["C:C", "D:D", "E:E", "F:F", "G:G"],
+            'widths': table.stretch_columns,
             "date": self.buy.date.strftime(u'%x'),
-            'exclude_row':  len(table.data) - 2,
+            'exclude_row': len(table.data) - 2,
         }
         export_dynamic_data(dict_data)
 
@@ -76,8 +79,8 @@ class BuyShowViewWidget(FWidget):
 
         buy = self.buy
         reports = Report.select().where(Report.buy == buy)
-        list_error = [(check_befor_update_data(report)) for report in reports]
-        if list_error == [] or list_error == [[]]:
+        rpt, remaining = check_befor_update_data(reports)
+        if not rpt:
             reply = QMessageBox.question(self, 'Confirmation',
                                          u"<h3 style='color:red;'>Voulez vous"
                                          u" vraiment annuler ce rapport"
@@ -87,16 +90,14 @@ class BuyShowViewWidget(FWidget):
                                          QMessageBox.No)
 
             if reply == QMessageBox.Yes:
-                from ui.dashboard import DashbordViewWidget
                 buy.deletes_data()
-                self.change_main_context(DashbordViewWidget)
+                self.close()
+                self.table_p.refresh_()
         else:
-            QMessageBox.about(self, u"Alerte",
-                              u"<h3>Vous ne pousez pas supprimer ce rapport car:</h3>"
-                              u"<ul><li></li>"
-                              u" %(err)s"
-                              u"<li>Après la suppression</li></ul>"
-                              % {"err": list_error})
+            QMessageBox.about(
+                self, u"Alerte", u"""
+                <h3>Vous ne pousez pas supprimer ce rapport car:</h3> <b>%(prod_name)s </b> aura comme restant : %(remaining)s Après la suppression</li></ul>"""
+                % {"prod_name": rpt.product.name, "remaining": remaining})
 
 
 class ShowBuyTableWidget(FTableWidget):
@@ -186,7 +187,7 @@ class ShowBuyTableWidget(FTableWidget):
         v_amount_tt_item = TotalsWidget(formatted_number(self.v_amount_tt))
         self.setItem(nb_rows, 4, v_amount_tt_item)
         self.setItem(nb_rows, 6, TotalsWidget(formatted_number(self.b_f_tt)))
-        # self.cancelbutton = Deleted_btt(u"Annuler l'achat")
+        # self.cancelbutton = DeletedBtt(u"Annuler l'achat")
         # self.cancelbutton.released.connect(self.parent.cancellation)
         self.setSpan(nb_rows, 0, 1, 3)
 

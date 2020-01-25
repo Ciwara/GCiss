@@ -10,9 +10,9 @@ from PyQt4.QtGui import (QVBoxLayout, QIcon, QTableWidgetItem)
 from Common.tabpane import tabbox
 from Common.ui.common import FWidget, FPageTitle, FBoxTitle, LineEdit
 from Common.ui.table import FTableWidget
-from Common.ui.util import show_date
+from Common.ui.util import is_int
 
-from models import Invoice, Buy
+from models import Invoice, Buy, ProviderOrClient
 from configuration import Config
 
 
@@ -34,7 +34,8 @@ class DashbordViewWidget(FWidget):
         table_buying = QVBoxLayout()
 
         self.search_field = LineEdit()
-        self.search_field.setPlaceholderText("Rechercher")
+        self.search_field.setPlaceholderText(
+            "Taper un nom client ou num. facture")
         self.search_field.setMaximumSize(
             500, self.search_field.maximumSize().height())
         self.search_field.textChanged.connect(self.finder)
@@ -59,21 +60,20 @@ class DashbordViewWidget(FWidget):
         self.setLayout(vbox)
 
     def finder(self):
-        self.table_invoice.refresh_(str(self.search_field.text()))
+        self.table_invoice.refresh_(self.search_field.text())
 
 
 class InvoiceTableWidget(FTableWidget):
 
     def __init__(self, parent):
         FTableWidget.__init__(self, parent=parent)
-        self.hheaders = [u"Facture N°", u"Date",
-                         u"Doit", u"Consulter"]
+        self.hheaders = [u"Facture N°", u"Date", u"Doit", u"Consulter"]
 
         self.parent = parent
 
         self.sorter = True
         self.stretch_columns = [1, 2]
-        self.display_fixed = True
+        # self.display_fixed = True
         self.align_map = {0: 'r', 1: 'r', 2: 'l', }
         self.refresh_()
         # self.refresh_()
@@ -90,31 +90,30 @@ class InvoiceTableWidget(FTableWidget):
         self.setColumnWidth(2, pw)
 
     def set_data_for(self, value):
-        # if not value:
-        #     print("is value")
-        invoices = Invoice.select().order_by(Invoice.number.desc())
         if value:
-            # return
-            qs = (Invoice.location.contains(value) |
-                  # Invoice.date.contains(value) |
-                  Invoice.client.contains(value))
-            try:
-                qs = qs | (Invoice.number.contains(int(value)))
-            except Exception as e:
-                print(e)
-            # invoices = invoices.where(qs).execute()
-            invoices = qs
+            value = str(value)
+            if is_int(value):
+                qs = ((Invoice.number == int(value)))
+                invoices = Invoice.select().where(qs)
+            else:
+                invoices = []
+                for clt in ProviderOrClient.select().where(
+                        ProviderOrClient.name.contains(value)).iterator():
+                    for invoice in clt.invoices().iterator():
+                        invoices.append(invoice)
+        else:
+            invoices = Invoice.select()[:100]
         try:
-            self.data = [(invoice.number, show_date(invoice.date),
+            self.data = [(invoice.number, invoice.date,
                           invoice.client, "") for invoice in invoices]
         except Exception as e:
-            print(e)
+            print("Exception ", e)
 
     def _item_for_data(self, row, column, data, context=None):
         if column == self.data[0].__len__() - 1:
             return QTableWidgetItem(
                 QIcon(u"{img_media}{img}".format(img_media=Config.img_cmedia,
-                                                 img="go-next.png")), (u"voir"))
+                                                 img="find.png")), (u"voir"))
 
         return super(InvoiceTableWidget, self)._item_for_data(row, column,
                                                               data, context)
@@ -126,10 +125,10 @@ class InvoiceTableWidget(FTableWidget):
 
         from ui.invoice_show import ShowInvoiceViewWidget
         try:
-            self.parent.change_main_context(ShowInvoiceViewWidget,
-                                            invoice_num=self.data[row][0])
-        except IndexError:
-            pass
+            self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
+                                    table_p=self, invoice_num=self.data[row][0])
+        except Exception as e:
+            print(e)
 
 
 class BuyTableWidget(FTableWidget):
@@ -151,14 +150,14 @@ class BuyTableWidget(FTableWidget):
         self.refresh()
 
     def set_data_for(self):
-        self.data = [(buy.id, show_date(buy.date), "")
+        self.data = [(buy.id, buy.date, "")
                      for buy in Buy.select()]
 
     def _item_for_data(self, row, column, data, context=None):
         if column == self.data[0].__len__() - 1:
             return QTableWidgetItem(
                 QIcon(u"{img_media}{img}".format(img_media=Config.img_cmedia,
-                                                 img="go-next.png")), (u"voir"))
+                                                 img="find.png")), (u"voir"))
 
         return super(BuyTableWidget, self)._item_for_data(row, column,
                                                           data, context)
@@ -167,9 +166,10 @@ class BuyTableWidget(FTableWidget):
         last_column = self.hheaders.__len__() - 1
         if column != last_column:
             return
+
+        from ui.buy_show import BuyShowViewWidget
         try:
-            from ui.buy_show import BuyShowViewWidget
-            self.parent.change_main_context(
-                BuyShowViewWidget, buy=Buy.get(id=self.data[row][0]))
-        except IndexError:
-            pass
+            self.parent.open_dialog(BuyShowViewWidget, modal=True, opacity=100,
+                                    table_p=self, buy=Buy.get(id=self.data[row][0]))
+        except Exception as e:
+            print(e)

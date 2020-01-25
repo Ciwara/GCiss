@@ -12,4 +12,9 @@ txt_export.py
 txt_import.py
 Todo.txt
 *.xlsx
+__pycache__/
+*.ini
+*.manifest
+*.dll
 licence.txt
+Todo.todo

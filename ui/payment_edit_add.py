@@ -13,10 +13,10 @@ from PyQt4.QtGui import (QIcon, QVBoxLayout, QFileDialog, QDialog, QTextEdit,
 from configuration import Config
 
 from Common.ui.util import check_is_empty, field_error, date_to_datetime
-from Common.ui.common import (FWidget, FPageTitle, Button_save, FormLabel,
-                              FLabel, LineEdit, IntLineEdit, Warning_btt,
+from Common.ui.common import (FWidget, FPageTitle, ButtonSave, FormLabel,
+                              FLabel, LineEdit, IntLineEdit, WarningBtt,
                               FormatDate)
-from Common import peewee
+import peewee
 from models import Payment
 
 
@@ -69,7 +69,7 @@ class EditOrAddPaymentrDialog(QDialog, FWidget):
         formbox.addRow(FormLabel(u"Libelle :"), self.libelle_field)
         formbox.addRow(FormLabel(u"Montant : *"), self.amount_field)
 
-        butt = Button_save(u"Enregistrer")
+        butt = ButtonSave(u"Enregistrer")
         butt.clicked.connect(self.save_edit)
         formbox.addRow("", butt)
 

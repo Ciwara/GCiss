@@ -4,18 +4,19 @@
 from __future__ import (
     unicode_literals, absolute_import, division, print_function)
 
-from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout, QWidget,
+from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout, QWidget, QDialog,
                          QIcon, QGridLayout, QSplitter, QFrame, QMessageBox,
                          QPushButton, QMenu, QCompleter, QPixmap)
 from PyQt4.QtCore import Qt
 
 from configuration import Config
 from models import Invoice, Report
-from tools.export_pdf import pdf_view
-from tools.export_xls import write_invoice_xls
+# from GCommon.tools.pdf_invoice import pdf_view
+# from tools.pdf import draw_pdf
+from export_pdf import pdf_view
 
-from Common.ui.util import formatted_number, is_int, uopen_file, show_date
-from Common.ui.common import FWidget, FPageTitle, FLabel, LineEdit, Deleted_btt
+from Common.ui.util import date_to_datetime, formatted_number, is_int, uopen_file, show_date
+from Common.ui.common import FWidget, FLabel, DeletedBtt
 from Common.ui.table import FTableWidget, TotalsWidget
 
 try:
@@ -24,16 +25,19 @@ except:
     unicode = str
 
 
-class ShowInvoiceViewWidget(FWidget):
+class ShowInvoiceViewWidget(QDialog, FWidget):
 
-    def __init__(self, invoice_num, parent=0, *args, **kwargs):
-        super(ShowInvoiceViewWidget, self).__init__(
-            parent=parent, *args, **kwargs)
+    def __init__(self, table_p, invoice_num, parent=0, *args, **kwargs):
+        # super(ShowInvoiceViewWidget, self).__init__(
+        #     parent=parent, *args, **kwargs)
+        QDialog.__init__(self, parent, *args, **kwargs)
+
         self.invoice = Invoice.get(number=invoice_num)
-        self.parentWidget().setWindowTitle(Config.NAME_ORGA +
-                                           u"  CONSULTATION DE FACTURE")
+        self.parentWidget().setWindowTitle(
+            "{} {}".format(Config.APP_NAME, "CONSULTATION DE FACTURE"))
 
         self.parent = parent
+        self.table_p = table_p
 
         vbox = QVBoxLayout()
         self.title = self.invoice.type_
@@ -53,15 +57,15 @@ class ShowInvoiceViewWidget(FWidget):
         self.button_xls.setFixedHeight(30)
         self.button_pdf.released.connect(self.printer_pdf)
         self.button_xls.released.connect(self.export_xls)
-        self.button_dl = Deleted_btt(u"Annuler la facture")
+        self.button_dl = DeletedBtt(u"Annuler la facture")
         self.button_dl.released.connect(self.cancellation)
 
         editbox.addWidget(FLabel(u"{typ} N°: {num}".format(
             num=self.invoice.number, typ=self.invoice.type_)), 0, 0)
-        editbox.addWidget(FLabel(u"%s le %s" % (self.invoice.location,
-                                                show_date(self.invoice.date))), 1, 4)
+        editbox.addWidget(FLabel(u"%s le %s" % (
+            self.invoice.location, show_date(self.invoice.date))), 1, 4)
         editbox.addWidget(FLabel(u"Doit: %s " % self.invoice.client), 1, 0)
-        # editbox.addWidget(self.button_pdf, 1, 5)
+        editbox.addWidget(self.button_pdf, 1, 5)
         editbox.addWidget(self.button_dl, 0, 4)
         editbox.addWidget(self.button_xls, 1, 6)
 
@@ -71,34 +75,49 @@ class ShowInvoiceViewWidget(FWidget):
 
     def export_xls(self):
         # TODO A
-        # from Common.exports_xlsx import export_dynamic_data
-        from Common.exports_xls import export_dynamic_data
-        from Common.cel import cel
+        from Common.exports_xlsx import export_dynamic_data
+        from num2words import num2words
         table = self.table_show
         hheaders = table.hheaders[:-1]
+        data = table.data
         endrowx = len(hheaders) - 1
         dict_data = {
-            'file_name': "facture.xls",
+            'file_name': "facture n {}".format(self.invoice.number),
             'headers': hheaders,
-            'data': table.get_table_items(),
-            "extend_rows": [(3, table.montant_ht)],
+            'data': data,
+            "extend_rows": [(3, table.montant_ht), ],
             'sheet': self.title,
-            'title': self.title,
+            # 'title': self.title,
             'widths': table.stretch_columns,
-            "date": self.invoice.date.strftime(u'%x'),
+            "date": show_date(self.invoice.date),
             "others": [
-                (4, 4, 0, 2, "Doit: {}".format(self.invoice.client)),
-                (45, 45, 0, endrowx,
-                 "Arrêté la présente facture à la somme de : {} FCFA".format(cel(table.montant_ht))),
-                (50, 50, 0, 0, "Pour acquit"),
-                (50, 50, endrowx, endrowx, "Le fournisseur")],
-            'exclude_row': len(table.data) - 2,
+                ("A7", "B7", "FACTURE N° : {}".format(self.invoice.number)),
+                ("A8", "B8", "Doit: {}".format(self.invoice.client.name)),
+                ("A35", "D35", "Arrêté la présente facture à la somme de : {} FCFA".format(
+                    num2words(table.montant_ht, lang="fr"))),
+                ("A38", "B38", "Pour acquit"),
+                ("C38", "D38", "Le fournisseur"),
+            ],
+            # 'exclude_row': len(data) - 2,
         }
         export_dynamic_data(dict_data)
 
     def printer_pdf(self):
-        pdf_report = pdf_view("invoice.pdf", self.invoice)
+        # pdf_report = draw_pdf(self.invoice)
+        pdf_report = pdf_view(self.data_export())
+        print(pdf_report)
         uopen_file(pdf_report)
+
+    def data_export(self):
+        return {
+            "title": "eee",
+            "file_name": "facture.pdf",
+            "invoice_date": self.invoice.date.strftime("%d/%m/%Y"),
+            "name_client": self.invoice.client.name,
+            "number": self.invoice.number,
+            "invoice_type": self.invoice.type_,
+            "data": self.table_show.get_table_items()
+        }
 
     def cancellation(self):
         reply = QMessageBox.question(self, 'Confirmation',
@@ -108,9 +127,9 @@ class ShowInvoiceViewWidget(FWidget):
                                      QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            from ui.dashboard import DashbordViewWidget
             self.invoice.deletes_data()
-            self.change_main_context(DashbordViewWidget)
+            self.close()
+            self.table_p.refresh_()
 
 
 class ShowOrderTableWidget(FTableWidget):
@@ -140,11 +159,11 @@ class ShowOrderTableWidget(FTableWidget):
         self.set_data_for()
         self.refresh()
 
-        pw = (self.parent.parent.page_width() / 5) - 20
-        self.setColumnWidth(0, pw)
-        self.setColumnWidth(1, pw * 2)
-        self.setColumnWidth(2, pw)
-        self.setColumnWidth(3, pw)
+        # pw = (self.parent.parent.page_width() / 5) - 20
+        # self.setColumnWidth(0, pw)
+        # self.setColumnWidth(1, pw * 2)
+        # self.setColumnWidth(2, pw)
+        # self.setColumnWidth(3, pw)
 
     def set_data_for(self):
 
@@ -218,5 +237,4 @@ class ShowOrderTableWidget(FTableWidget):
             except Exception as e:
                 print(e)
                 liste_item.append("")
-        print(list_invoice)
         return list_invoice

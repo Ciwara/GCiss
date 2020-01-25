@@ -4,15 +4,17 @@
 # maintainer: Fad
 from __future__ import (unicode_literals, absolute_import, division,
                         print_function)
-
+import os
 from static import Constants
-from Common import peewee
+import peewee
 
 
 class Config(Constants):
 
     """ docstring for Config
                             """
+
+    DATEFORMAT = u'%d/%m/%Y'
 
     def __init__(self):
         Constants.__init__(self)
@@ -23,7 +25,8 @@ class Config(Constants):
 
     try:
         DB_VERS = Version().get(Version.number == 1)
-    except:
+    except Exception as e:
+        print(e)
         DB_VERS = 1
     try:
         sttg = Organization().get(Organization.id == 1)
@@ -37,3 +40,4 @@ class Config(Constants):
     except peewee.OperationalError:
         pass
     DEBUG = True
+    ORG_LOGO = "org_logo.png"

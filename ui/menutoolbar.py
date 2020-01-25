@@ -42,9 +42,9 @@ class MenuToolBar(QToolBar, FWidget):
         self.setAcceptDrops(True)
         # self.setAutoFillBackground(True)
 
+        self.addSeparator()
         self.addAction(
             QIcon(u"{}exit.png".format(Config.img_cmedia)), u"Quiter", self.goto_exit)
-        self.addSeparator()
         menu = [{"name": u"Tableau de bord", "icon": 'dashboard', "admin": False, "goto": DashbordViewWidget},
                 # {"name": u"Articles", "admin": True,
                 #     "icon": 'product', "goto": ProductsViewWidget},

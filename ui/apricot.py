@@ -13,10 +13,16 @@ from PyQt4.QtGui import QIcon, QVBoxLayout, QGridLayout, QFont
 from models import Report, Refund
 from configuration import Config
 
-from Common.peewee import fn
-from Common.ui.common import FWidget, FPageTitle, FormatDate, BttExportXLS
+from peewee import fn
+from Common.ui.common import FWidget, FPageTitle, FormatDate, BttExportXLSX
 from Common.ui.util import formatted_number, date_on_or_end, is_int
 from Common.ui.table import FTableWidget, TotalsWidget
+
+
+try:
+    unicode
+except:
+    unicode = str
 
 
 class ApricotsViewWidget(FWidget):
@@ -32,14 +38,15 @@ class ApricotsViewWidget(FWidget):
         gridbox = QGridLayout()
         self.title = "La caise"
         tablebox.addWidget(FPageTitle(self.title))
-
         self.date_ = FormatDate(QDate.currentDate())
+        self.btt_export = BttExportXLSX(u"Exporter")
+        self.btt_export.setEnabled(False)
+        self.btt_export.clicked.connect(self.export_xls)
+
         self.table_op = ApricotsTableWidget(parent=self)
         tablebox.addWidget(self.table_op)
         # self.date_.setFont(QFont("Courier New", 10, True))
         self.date_.dateChanged.connect(self.table_op.refresh_)
-        self.btt_export = BttExportXLS(u"Exporter")
-        self.btt_export.clicked.connect(self.export_xls)
 
         gridbox.addWidget(self.date_, 0, 0)
         gridbox.addWidget(self.btt_export, 0, 2)
@@ -51,14 +58,15 @@ class ApricotsViewWidget(FWidget):
         self.setLayout(vbox)
 
     def export_xls(self):
-        from Common.exports_xls import export_dynamic_data
+        from Common.exports_xlsx import export_dynamic_data
         dict_data = {
-            'file_name': "arivage.xls",
+            'file_name': "caise",
             'headers': self.table_op.hheaders,
-            'data': self.table_op.data,
+            'data': self.table_op.get_table_items(),
             "extend_rows": [(3, self.table_op.amount_ht), ],
             'sheet': self.title,
             'title': self.title,
+            'format_money': ["C:C", "D:D", ],
             'widths': self.table_op.stretch_columns,
             "date": self.date_.text()
         }
@@ -75,8 +83,7 @@ class ApricotsTableWidget(FTableWidget):
 
         self.parent = parent
 
-        self.hheaders = [u"models", u"Quantité",
-                         u"P Vente", u"Montant"]
+        self.hheaders = [u"models", u"Quantité", u"P Vente", u"Montant"]
 
         self.stretch_columns = [0, 1, 2, 5]
         self.align_map = {1: "r", 2: "r", 3: "r", 4: "r"}
@@ -110,6 +117,8 @@ class ApricotsTableWidget(FTableWidget):
         self.refresh()
 
     def extend_rows(self):
+
+        self.parent.btt_export.setEnabled(True)
         nb_rows = self.rowCount()
         date = self.parent.date_.text()
 
@@ -156,3 +165,20 @@ class ApricotsTableWidget(FTableWidget):
 
     def click_item(self, row, column, *args):
         pass
+        self.setSpan(nb_rows, 0, 2, 2)
+
+    def get_table_items(self):
+        """ Recupère les elements du tableau """
+        list_invoice = []
+        for i in range(self.rowCount() - 1):
+            liste_item = []
+            try:
+                liste_item.append(unicode(self.item(i, 0).text()))
+                liste_item.append(is_int(self.item(i, 1).text()))
+                liste_item.append(is_int(self.item(i, 2).text()))
+                liste_item.append(is_int(self.item(i, 3).text()))
+                list_invoice.append(liste_item)
+            except Exception as e:
+                print(e)
+                liste_item.append("")
+        return list_invoice

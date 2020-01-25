@@ -8,9 +8,9 @@ from __future__ import (
 
 from datetime import datetime
 
-from Common.peewee import (DateTimeField, CharField, IntegerField, BooleanField,
-                           ForeignKeyField, TextField)
-from GCommon.models import (BaseModel, SettingsAdmin, Version, FileJoin,
+from peewee import (DateTimeField, CharField, IntegerField, BooleanField,
+                    ForeignKeyField, TextField)
+from GCommon.models import (BaseModel, Version, FileJoin,
                             Organization, Owner, Category, Store)
 
 FDATE = u"%c"
@@ -33,7 +33,7 @@ class Store(Store):
 
         try:
             return Report.select().where(Report.store == self)
-        except Common.peewee.ReportDoesNotExist as e:
+        except peewee.ReportDoesNotExist as e:
             print("get_reports ", e)
 
     def get_report_or_none(self):
@@ -49,7 +49,6 @@ class Store(Store):
                   .order_by(Report.date.desc()))
         if rpt:
             remaining = rpt.remaining
-            # print(rpt.product.name)
         return remaining, prod.number_parts_box
 
 
@@ -250,13 +249,21 @@ class ProviderOrClient(BaseModel):
                                      Report.invoice.client == self)
 
     def is_indebted(self):
+        flag = False
+        if self.last_remaining() > 0:
+            flag = True
+        return flag
+
+    def last_refund(self):
         try:
-            ref = Refund.select().where(Refund.provider_client == self).order_by(
+            return Refund.select().where(Refund.provider_client == self).order_by(
                 Refund.date.desc()).get()
-            if ref.remaining > 0:
-                return True
         except Exception as e:
-            return False
+            return None
+
+    def last_remaining(self):
+        last_r = self.last_refund()
+        return last_r.remaining if last_r else 0
 
     def __str__(self):
         return u"{}, {}".format(self.name, self.phone)
@@ -278,7 +285,7 @@ class Invoice(BaseModel):
     """ Represents an invoices """
 
     class Meta:
-        order_by = ('number',)
+        order_by = ('-number',)
 
     TYPE_FACT = 'Facture'
     TYPE_PROF = 'Proforma'
@@ -309,6 +316,10 @@ class Invoice(BaseModel):
         self.owner = Owner.get(Owner.islog == True)
         super(Invoice, self).save()
 
+    # @property
+    # def clt_name(self):
+    #     return self.client.name
+
     @property
     def get_next_number(self):
         """ Get a valid number automatically incremented from
@@ -325,19 +336,33 @@ class Invoice(BaseModel):
         return Report.select().filter(Report.invoice == self)
 
     @property
+    def amount_ivoice(self):
+        return sum([(val.selling_price * val.qty) for val in self.items])
+
+    @property
     def debts(self):
         return Refund.select().filter(Refund.invoice == self)
 
     @property
     def date(self):
-        return self.items.first().date
+        # print(self.number)
+        try:
+            # print('DATE ', self.items.first().date)
+            return self.items.first().date
+        except Exception as e:
+            print(e, "  ", self.number)
+            return NOW
 
     def deletes_data(self):
+        print("deletes data")
         for rep in self.items:
+            print("d rep ", self.items)
             rep.deletes_data()
         for debt in self.debts:
+            print("d debt ", self.debts)
             debt.deletes_data()
         self.delete_instance()
+        print('Done d invoice')
 
     def display_name(self):
         return u"Facture N: {num} de {client} au {date}".format(num=self.number,

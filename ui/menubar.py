@@ -21,6 +21,7 @@ from GCommon.ui.products import ProductsViewWidget
 from ui.invoice import InvoiceViewWidget
 from ui.apricot import ApricotsViewWidget
 from ui.buy import BuyViewWidget
+from ui.providers import ProvidersViewWidget
 from ui.debt_manager import DebtsViewWidget
 
 
@@ -50,6 +51,8 @@ class MenuBar(FMenuBar, FWidget):
                  "shortcut": "Ctrl+A", "goto": BuyViewWidget},
                 {"name": u"Dettes", "admin": True, "icon": 'debt',
                  "shortcut": "Ctrl+D", "goto": DebtsViewWidget},
+                {"name": u"Clients", "admin": True, "icon": '',
+                 "shortcut": "Alt+C", "goto": ProvidersViewWidget},
                 ]
 
         # Menu aller à
@@ -81,39 +84,6 @@ class MenuBar(FMenuBar, FWidget):
 
     def goto(self, goto):
         self.change_main_context(goto)
-
-    def logout(self):
-
-        from Common.ui.login import LoginWidget
-        self.parent.logout()
-        # self.change_main_context(LoginWidget)
-
-    def add_product(self):
-        self.change_main_context(ProductsViewWidget)
-
-    def add_store(self):
-        self.change_main_context(StoreViewWidget)
-
-    def goto_by_period(self):
-        self.change_main_context(PeriodByViewWidget)
-
-    def Inventory(self):
-        self.change_main_context(InventoryViewWidget)
-
-    def all_report(self):
-        self.change_main_context(AllreportsViewWidget)
-
-    # Export the database.
-    def goto_export_db(self):
-        export_database_as_file()
-
-    # Command
-    def goto_commande(self):
-        self.change_main_context(OrderViewWidget)
-
-    # Autre depense
-    def goto_otherexp(self):
-        self.change_main_context(OtherExpensesViewWidget)
 
     # Aide
     def goto_help(self):

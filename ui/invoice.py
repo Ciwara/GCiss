@@ -10,13 +10,12 @@ from PyQt4.QtGui import (QVBoxLayout, QHBoxLayout, QComboBox,
                          QIcon, QGridLayout, QSplitter, QFrame, QCompleter,
                          QPushButton, QMenu, QCompleter, QPixmap)
 
-from Common.ui.util import (check_is_empty, formatted_number, is_int,
-                            SystemTrayIcon, date_to_datetime, field_error, check_field)
+from Common.ui.util import (check_is_empty, check_field, is_int, field_error,
+                            SystemTrayIcon, date_to_datetime, formatted_number)
 from Common.ui.table import FTableWidget, TotalsWidget
-from Common.ui.common import (FWidget, FBoxTitle, ErrorLabel, LineEdit,
-                              FLabel, FormatDate, FLabel,
-                              IntLineEdit, BttSmall, ExtendedComboBox)
-from Common.peewee import fn
+from Common.ui.common import (FWidget, FBoxTitle, IntLineEdit, LineEdit, FLabel,
+                              FormatDate, ErrorLabel, BttSmall, ExtendedComboBox)
+from peewee import fn
 
 from GCommon.ui._product_detail import InfoTableWidget
 from ui.invoice_show import ShowInvoiceViewWidget
@@ -37,9 +36,9 @@ class InvoiceViewWidget(FWidget):
             Config.APP_NAME + u"      Ventes")
         self.parent = parent
 
-        vbox = QVBoxLayout(self)
+        vbox = QVBoxLayout()
         # hbox = QHBoxLayout(self)
-        editbox = QGridLayout(self)
+        editbox = QGridLayout()
         try:
             next_number = int(
                 Invoice.select().order_by(Invoice.number.desc()).get().number) + 1
@@ -69,7 +68,8 @@ class InvoiceViewWidget(FWidget):
         self.add_clt_btt.setFixedWidth(50)
 
         # Combobox widget for add store
-        self.liste_type_invoice = [Invoice.TYPE_FACT, Invoice.TYPE_BON]
+        self.liste_type_invoice = [Invoice.TYPE_FACT, Invoice.TYPE_BON,
+                                   Invoice.TYPE_PROF]
 
         self.box_type_inv = QComboBox()
         for index in range(0, len(self.liste_type_invoice)):
@@ -81,6 +81,7 @@ class InvoiceViewWidget(FWidget):
         self.search_field.setPlaceholderText("Rechercher un article")
         self.search_field.textChanged.connect(self.finder)
         # self.search_field.setFixedWidth(250)
+        self.search_field.setMaximumHeight(40)
 
         self.table_invoice = InvoiceTableWidget(parent=self)
         self.table_resultat = ResultatTableWidget(parent=self)
@@ -118,7 +119,6 @@ class InvoiceViewWidget(FWidget):
 
     def add_clt(self):
         from GCommon.ui.provider_client_edit_add import EditOrAddClientOrProviderDialog
-
         self.open_dialog(EditOrAddClientOrProviderDialog, modal=True,
                          prov_clt=None, table_p=self)
 
@@ -138,6 +138,9 @@ class InvoiceViewWidget(FWidget):
                 self.name_client_field, "Nom, numéro de téléphone du client")
             return False
         return True
+
+    def refresh_(self):
+        pass
 
     def save_b(self):
         ''' add operation '''
@@ -204,9 +207,12 @@ class InvoiceViewWidget(FWidget):
             return False
         else:
             self.parent.Notify("Facture Enregistrée avec succès", "success")
-
-            self.change_main_context(ShowInvoiceViewWidget,
-                                     invoice_num=invoice.number)
+            self.table_invoice._reset()
+            try:
+                self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
+                                        table_p=self,  invoice_num=invoice.number)
+            except Exception as e:
+                print(e)
 
 
 class ResultatTableWidget(FTableWidget):

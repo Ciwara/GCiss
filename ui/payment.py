@@ -13,10 +13,10 @@ from PyQt4.QtCore import Qt, QDate
 
 from configuration import Config
 from Common.ui.common import (FormLabel, FWidget, FPeriodHolder, FPageTitle,
-                              Button, BttExportXLS, FormatDate)
+                              Button, BttExportXLSX, FormatDate)
 from Common.ui.table import FTableWidget, TotalsWidget
-from Common.ui.util import formatted_number, is_int, show_date, date_to_datetime
-from models import Invoice, Report, Payment
+from Common.ui.util import formatted_number, is_int, date_to_datetime
+from models import Payment
 from ui.payment_edit_add import EditOrAddPaymentrDialog
 
 
@@ -35,7 +35,7 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
         FPeriodHolder.__init__(self, *args, **kwargs)
 
         self.parentWidget().setWindowTitle(
-            Config.APP_NAME + u"    TOUS LES RAPPORTS")
+            Config.APP_NAME + u"   Movements")
         self.parent = parent
 
         self.title = u"Movements"
@@ -43,12 +43,19 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
         self.on_date = FormatDate(
             QDate(date.today().year, date.today().month, 1))
         self.end_date = FormatDate(QDate.currentDate())
+        self.now = datetime.now().strftime("%x")
+        self.soldeField = FormLabel("0")
+        self.label_balance = FormLabel(u"Solde au {} ".format(self.now))
+        balanceBox = QGridLayout()
+        balanceBox.addWidget(self.label_balance, 0, 2)
+        balanceBox.addWidget(self.soldeField, 0, 3)
+        balanceBox.setColumnStretch(0, 1)
 
         self.table = RapportTableWidget(parent=self)
         self.button = Button(u"Ok")
         self.button.clicked.connect(self.table.refresh_)
 
-        self.btt_export = BttExportXLS(u"Exporter")
+        self.btt_export = BttExportXLSX(u"Exporter")
         self.btt_export.clicked.connect(self.export_xls)
         self.add_btt = Button("Créditer")
         self.add_btt.setIcon(QIcon(u"{img_media}{img}".format(img_media=Config.img_media,
@@ -74,21 +81,23 @@ class PaymentViewWidget(FWidget, FPeriodHolder):
         vbox.addWidget(FPageTitle(self.title))
         vbox.addLayout(editbox)
         vbox.addWidget(self.table)
+        vbox.addLayout(balanceBox)
         self.setLayout(vbox)
 
     def export_xls(self):
-        from Common.exports_xls import export_dynamic_data
+        from Common.exports_xlsx import export_dynamic_data
         dict_data = {
-            'file_name': "versement.xls",
+            'file_name': "versements.xlsx",
             'headers': self.table.hheaders[:-1],
             'data': self.table.data,
             "extend_rows": [(1, self.table.label_mov_tt),
                             (2, self.table.totals_debit),
                             (3, self.table.totals_credit), ],
-            "footers": [(0, 2, 3, self.table.label_balance),
-                        (0, 4, 4, self.table.balance_tt), ],
+            "footers": [
+                ("C", "E", "Solde au {} = {}".format(self.now, self.table.balance_tt)), ],
             'sheet': self.title,
-            'title': self.title,
+            # 'title': self.title,
+            'format_money': ['C:C', 'D:D', 'E:E', ],
             'widths': self.table.stretch_columns,
             'exclude_row': len(self.table.data) - 1,
             "date": "Du {} au {}".format(
@@ -115,15 +124,15 @@ class RapportTableWidget(FTableWidget):
         FTableWidget.__init__(self, parent=parent, *args, **kwargs)
 
         self.hheaders = [
-            u"Date", u"Libelle opération", u"débit", u"Crédit", u"Solde", ""]
+            u"Date", u"Libelle opération", u"Débit", u"Crédit", u"Solde", ""]
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.popup)
 
         self.parent = parent
 
-        self.sorter = True
-        self.stretch_columns = [0, 1, 5]
+        # self.sorter = True
+        self.stretch_columns = [0, 1, 4]
         self.align_map = {0: 'l', 1: 'l', 2: 'r', 3: 'r', 4: 'r'}
         self.ecart = -5
         self.display_vheaders = False
@@ -139,17 +148,23 @@ class RapportTableWidget(FTableWidget):
         self.refresh()
         self.hideColumn(len(self.hheaders) - 1)
 
-    def set_data_for(self, *args):
+        pw = self.parent.parent.page_width() / 5
+        self.setColumnWidth(0, pw)
+        self.setColumnWidth(1, pw)
+        self.setColumnWidth(2, pw)
+        self.setColumnWidth(3, pw)
+        # self.setColumnWidth(4, pw)
 
+    def set_data_for(self, *args):
         date_ = args[0]
-        print(date_)
-        self.data = [(show_date(pay.date), pay.libelle, pay.debit, pay.credit,
+        self.data = [(pay.date, pay.libelle, pay.debit, pay.credit,
                       pay.balance, pay.id) for pay in Payment.filter(Payment.date > date_[
-                          0], Payment.date < date_[1]).order_by(Payment.date.asc())]
+                          0], Payment.date < date_[1]).order_by(Payment.date.desc())]
+        self.refresh()
 
     def popup(self, pos):
 
-        from ui.ligne_edit import EditLigneViewWidget
+        # from ui.ligne_edit import EditLigneViewWidget
         from ui.deleteview import DeleteViewWidget
         from data_helper import check_befor_update_payment
 
@@ -177,24 +192,23 @@ class RapportTableWidget(FTableWidget):
         self.totals_debit = 0
         self.totals_credit = 0
         self.balance_tt = 0
-        for row_num in xrange(0, self.data.__len__()):
+        cp = 0
+        for row_num in range(0, self.data.__len__()):
             mtt_debit = is_int(unicode(self.item(row_num, 2).text()))
             mtt_credit = is_int(unicode(self.item(row_num, 3).text()))
+            if cp == 0:
+                last_balance = is_int(unicode(self.item(row_num, 4).text()))
             self.totals_debit += mtt_debit
             self.totals_credit += mtt_credit
+            cp += 1
 
-        self.balance_tt = self.totals_debit - self.totals_credit
+        self.balance_tt = last_balance
+        # self.balance_tt = self.totals_debit - self.totals_credit
 
-        self.label_mov_tt = u"Total general mouvements: "
+        self.label_mov_tt = u"Totals mouvements: "
         self.setItem(nb_rows, 1, TotalsWidget(self.label_mov_tt))
         self.setItem(
             nb_rows, 2, TotalsWidget(formatted_number(self.totals_debit)))
         self.setItem(
             nb_rows, 3, TotalsWidget(formatted_number(self.totals_credit)))
-
-        self.label_balance = u"Solde au {} ".format(
-            datetime.now().strftime("%x"))
-        self.setItem(
-            nb_rows + 1, 1, TotalsWidget(self.label_balance))
-        self.setItem(
-            nb_rows + 1, 2, TotalsWidget(formatted_number(self.balance_tt)))
+        self.parent.soldeField.setText(formatted_number(self.balance_tt))

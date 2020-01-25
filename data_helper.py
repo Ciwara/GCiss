@@ -13,33 +13,35 @@ from configuration import Config
 
 def warning_of_prod():
     """"""
-    l = []
+    list_w = []
     for store in Store.all():
         for prod in Product.all():
             report = last_report_store_prod(store.name, prod.name)
             try:
                 if report.remaining < Config.nb_warning:
-                    l.append(report)
+                    list_w.append(report)
             except AttributeError:
                 pass
-    return l
+    return list_w
 
 
-def check_befor_update_data(report):
-    list_error = []
-    if report.last_report:
-        remaining = report.last_report.remaining
-    else:
-        remaining = 0
-    for rpt in report.next_rpts():
-        if rpt.type_ == Report.E:
-            remaining += rpt.qty
-        if rpt.type_ == Report.S:
-            remaining -= rpt.qty
-        if remaining < 0:
-            list_error.append(remaining)
-            continue
-    return list_error
+def check_befor_update_data(reports):
+    print("check_befor_update_data")
+    for report in reports:
+        list_error = []
+        if report.last_report:
+            remaining = report.last_report.remaining
+        else:
+            remaining = 0
+        for rpt in report.next_rpts():
+            if rpt.type_ == Report.E:
+                remaining += rpt.qty
+            if rpt.type_ == Report.S:
+                remaining -= rpt.qty
+            if remaining < 0:
+                return rpt, remaining
+                break
+    return None, ""
 
 
 def check_befor_update_payment(pay):
@@ -47,7 +49,6 @@ def check_befor_update_payment(pay):
     lt = []
     for rpt in pay.next_rpts():
         previous_balance = int(rpt.last_balance_payment())
-        print(rpt)
         if rpt.type_ == Payment.CREDIT:
             balance = previous_balance + int(rpt.credit)
             lt.append(
@@ -58,5 +59,4 @@ def check_befor_update_payment(pay):
                 "{} = last {} - {}".format(balance, previous_balance, rpt.debit))
         # if balance < 0:
         #     return False
-    print(lt)
     return True

@@ -4,16 +4,16 @@
 
 
 from PyQt4.QtGui import (QSplitter, QHBoxLayout, QVBoxLayout, QPushButton,
-                         QTableWidgetItem, QPixmap, QFont, QListWidget,
-                         QListWidgetItem, QIcon, QMenu, QFormLayout)
+                         QTableWidgetItem, QPixmap, QFont, QListWidget, QMenu,
+                         QListWidgetItem, QIcon, QFormLayout, QGridLayout)
 from PyQt4.QtCore import Qt, SIGNAL, SLOT, QSize
 
-from Common.peewee import fn
+from peewee import fn
 from models import ProviderOrClient, Invoice, Refund
 
-from Common.ui.common import FWidget, FBoxTitle, Button, LineEdit
+from Common.ui.common import FWidget, FBoxTitle, Button, LineEdit, FLabel
 from Common.ui.table import FTableWidget, TotalsWidget
-from Common.ui.util import formatted_number, show_date, is_int
+from Common.ui.util import formatted_number, is_int
 
 from configuration import Config
 
@@ -32,6 +32,11 @@ class DebtsViewWidget(FWidget):
             Config.NAME_ORGA + u"Gestion des dettes")
 
         hbox = QHBoxLayout(self)
+        # self.balace_box = QGridLayout(self)
+        # self.balace_box.addWidget(FLabel(u"Reste à payer :"), 0, 2)
+        # self.balace_box.setRowStretch(1, 2)
+        self.remaining_box = FLabel()
+        self.remaining_box.setMaximumHeight(40)
 
         self.table_debt = DebtsTableWidget(parent=self)
         self.table_provid_clt = ProviderOrClientTableWidget(parent=self)
@@ -39,7 +44,7 @@ class DebtsViewWidget(FWidget):
         self.search_field = LineEdit()
         self.search_field.textChanged.connect(self.search)
         self.search_field.setPlaceholderText(u"Nom ou  numéro tel")
-
+        self.search_field.setMaximumHeight(40)
         splitter = QSplitter(Qt.Horizontal)
 
         self.splitter_left = QSplitter(Qt.Vertical)
@@ -47,6 +52,7 @@ class DebtsViewWidget(FWidget):
         self.splitter_left.addWidget(self.table_provid_clt)
 
         splt_clt = QSplitter(Qt.Vertical)
+        splt_clt.addWidget(self.remaining_box)
         splt_clt.addWidget(self.table_debt)
         splt_clt.resize(900, 1000)
         splitter.addWidget(self.splitter_left)
@@ -129,12 +135,9 @@ class ProviderOrClientQListWidgetItem(QListWidgetItem):
         self.setSizeHint(QSize(0, 30))
         icon = QIcon()
 
-        if isinstance(self.provid_clt, str):
-            print("kkkkk")
-        else:
-            icon.addPixmap(
-                QPixmap("{}.png".format(
-                    Config.img_media + "debt" if self.provid_clt.is_indebted() else Config.img_cmedia + "user_active")),
+        if not isinstance(self.provid_clt, str):
+            icon.addPixmap(QPixmap("{}.png".format(
+                Config.img_media + "debt" if self.provid_clt.is_indebted() else Config.img_cmedia + "user_active")),
                 QIcon.Normal, QIcon.Off)
 
         self.setIcon(icon)
@@ -194,14 +197,13 @@ class DebtsTableWidget(FTableWidget):
         action = menu.exec_(self.mapToGlobal(pos))
 
         if action == del_refund:
-
             from ui.deleteview import DeleteViewWidget
-            self.parent.open_dialog(
-                DeleteViewWidget, modal=True, obj=refund, table_p=self)
+            self.parent.open_dialog(DeleteViewWidget, modal=True, obj=refund,
+                                    table_p=self)
         if action == edit_refund:
             from ui.refund_edit_add import RefundEditAddDialog
-            self.parent.open_dialog(
-                RefundEditAddDialog, modal=True, type_=Refund.RB, refund=refund, table_p=self)
+            self.parent.open_dialog(RefundEditAddDialog, modal=True,
+                                    type_=Refund.RB, refund=refund, table_p=self)
 
     def refresh_(self, provid_clt_id=None, search=None):
         self._reset()
@@ -210,7 +212,7 @@ class DebtsTableWidget(FTableWidget):
 
         pw = self.parent.parent.page_width() / 8
         self.setColumnWidth(0, 40)
-        self.setColumnWidth(1, pw)
+        self.setColumnWidth(1, 40)
         self.setColumnWidth(2, pw * 2)
         self.setColumnWidth(3, pw)
         self.setColumnWidth(4, pw)
@@ -221,46 +223,50 @@ class DebtsTableWidget(FTableWidget):
         qs = Refund.select().where(
             Refund.status == False).order_by(Refund.date.desc())
 
+        self.remaining = 0
         if isinstance(provid_clt_id, int):
             qs = qs.select().where(
                 Refund.provider_client == ProviderOrClient.get(id=provid_clt_id))
-        self.data = [(ref.id, ref.type_, show_date(ref.date), ref.invoice.number,
-                      ref.amount, ref.remaining) for ref in qs]
+        else:
+            for prov in ProviderOrClient.select().where(
+                    ProviderOrClient.type_ == ProviderOrClient.CLT):
+                self.remaining += prov.last_remaining()
+        self.parent.remaining_box.setText(
+            self.display_remaining(formatted_number(self.remaining)))
+
+        self.data = [(ref.id, ref.type_, ref.date, ref.invoice.number,
+                      ref.amount, ref.remaining) for ref in qs.iterator()]
 
     def extend_rows(self):
-
-        nb_rows = self.rowCount()
-        self.setRowCount(nb_rows + 2)
-        nb_rows += 1
-        self.setItem(nb_rows, 3, TotalsWidget(u"Dette restante: "))
-
         if isinstance(self.provid_clt_id, int):
-            self.remaining = is_int(
-                self.item(self.data.__len__() - 1, 5).text())
-        else:
-            self.remaining = 0
-            # for prov in ProviderOrClient.select().where(
-            #         ProviderOrClient.type_ == ProviderOrClient.CLT):
-            #     rmaing = Refund.select(Refund.provider_client == prov).order_by(
-            #         Refund.date.desc()).get()
-            #     self.remaining += rmaing.remaining if rmaing else 0
-        self.setItem(
-            nb_rows, 4, TotalsWidget(formatted_number(self.remaining)))
-        self.btt_refund = QPushButton(u"Reglement")
-        self.setSpan(nb_rows - 1, 0, 2, 3)
+            self.remaining = is_int(self.item(0, 5).text())
+            self.parent.remaining_box.setText(
+                self.display_remaining(formatted_number(self.remaining)))
 
     def _item_for_data(self, row, column, data, context=None):
         if column == 0:
             return QTableWidgetItem(QIcon(u"{}find.png".format(Config.img_cmedia)), "")
+        if column == 1 and self.data[row][1] == Refund.RB:
+            return QTableWidgetItem(QIcon(u"{img_media}{img}".format(img_media=Config.img_media,
+                                                                     img="in.png")), u"")
+        if column == 1 and self.data[row][1] == Refund.DT:
+            return QTableWidgetItem(QIcon(u"{img_media}{img}".format(img_media=Config.img_media,
+                                                                     img="out.png")), u"")
         return super(DebtsTableWidget, self)._item_for_data(row, column,
                                                             data, context)
 
     def click_item(self, row, column, *args):
         if column != 0:
             return
+
         from ui.invoice_show import ShowInvoiceViewWidget
         try:
-            self.parent.change_main_context(ShowInvoiceViewWidget,
-                                            invoice_num=self.data[row][3])
-        except IndexError:
-            pass
+            self.parent.open_dialog(ShowInvoiceViewWidget, modal=True, opacity=100,
+                                    table_p=self, invoice_num=self.data[row][3])
+        except Exception as e:
+            print(e)
+
+    def display_remaining(self, text):
+        return """
+        <h2>Dette restante: <b>{}</b> Fcfa </h2>
+        """.format(text)
