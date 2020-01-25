@@ -11,11 +11,12 @@ from PyQt4.QtCore import Qt
 
 from configuration import Config
 from models import Invoice, Report
-from GCommon.tools.pdf_invoice import pdf_view
+# from GCommon.tools.pdf_invoice import pdf_view
 # from tools.pdf import draw_pdf
+from export_pdf import pdf_view
 
-from Common.ui.util import formatted_number, is_int, uopen_file, show_date
-from Common.ui.common import FWidget, FLabel, Deleted_btt
+from Common.ui.util import date_to_datetime, formatted_number, is_int, uopen_file, show_date
+from Common.ui.common import FWidget, FLabel, DeletedBtt
 from Common.ui.table import FTableWidget, TotalsWidget
 
 try:
@@ -56,7 +57,7 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
         self.button_xls.setFixedHeight(30)
         self.button_pdf.released.connect(self.printer_pdf)
         self.button_xls.released.connect(self.export_xls)
-        self.button_dl = Deleted_btt(u"Annuler la facture")
+        self.button_dl = DeletedBtt(u"Annuler la facture")
         self.button_dl.released.connect(self.cancellation)
 
         editbox.addWidget(FLabel(u"{typ} N°: {num}".format(
@@ -103,8 +104,20 @@ class ShowInvoiceViewWidget(QDialog, FWidget):
 
     def printer_pdf(self):
         # pdf_report = draw_pdf(self.invoice)
-        pdf_report = pdf_view("invoice", self.invoice)
+        pdf_report = pdf_view(self.data_export())
+        print(pdf_report)
         uopen_file(pdf_report)
+
+    def data_export(self):
+        return {
+            "title": "eee",
+            "file_name": "facture.pdf",
+            "invoice_date": self.invoice.date.strftime("%d/%m/%Y"),
+            "name_client": self.invoice.client.name,
+            "number": self.invoice.number,
+            "invoice_type": self.invoice.type_,
+            "data": self.table_show.get_table_items()
+        }
 
     def cancellation(self):
         reply = QMessageBox.question(self, 'Confirmation',

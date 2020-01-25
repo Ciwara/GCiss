@@ -10,7 +10,7 @@ from datetime import datetime
 
 from peewee import (DateTimeField, CharField, IntegerField, BooleanField,
                     ForeignKeyField, TextField)
-from GCommon.models import (BaseModel, SettingsAdmin, Version, FileJoin,
+from GCommon.models import (BaseModel, Version, FileJoin,
                             Organization, Owner, Category, Store)
 
 FDATE = u"%c"
@@ -285,7 +285,7 @@ class Invoice(BaseModel):
     """ Represents an invoices """
 
     class Meta:
-        order_by = ('number',)
+        order_by = ('-number',)
 
     TYPE_FACT = 'Facture'
     TYPE_PROF = 'Proforma'

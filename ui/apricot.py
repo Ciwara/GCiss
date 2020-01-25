@@ -14,7 +14,7 @@ from models import Report, Refund
 from configuration import Config
 
 from peewee import fn
-from Common.ui.common import FWidget, FPageTitle, FormatDate, BttExportXLS
+from Common.ui.common import FWidget, FPageTitle, FormatDate, BttExportXLSX
 from Common.ui.util import formatted_number, date_on_or_end, is_int
 from Common.ui.table import FTableWidget, TotalsWidget
 
@@ -39,7 +39,7 @@ class ApricotsViewWidget(FWidget):
         self.title = "La caise"
         tablebox.addWidget(FPageTitle(self.title))
         self.date_ = FormatDate(QDate.currentDate())
-        self.btt_export = BttExportXLS(u"Exporter")
+        self.btt_export = BttExportXLSX(u"Exporter")
         self.btt_export.setEnabled(False)
         self.btt_export.clicked.connect(self.export_xls)
 
@@ -83,7 +83,7 @@ class ApricotsTableWidget(FTableWidget):
 
         self.parent = parent
 
-        self.hheaders = [u"models", u"Quantité",  u"P Vente", u"Montant"]
+        self.hheaders = [u"models", u"Quantité", u"P Vente", u"Montant"]
 
         self.stretch_columns = [0, 1, 2, 5]
         self.align_map = {1: "r", 2: "r", 3: "r", 4: "r"}

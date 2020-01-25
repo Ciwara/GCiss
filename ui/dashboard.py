@@ -92,7 +92,6 @@ class InvoiceTableWidget(FTableWidget):
     def set_data_for(self, value):
         if value:
             value = str(value)
-            print(value)
             if is_int(value):
                 qs = ((Invoice.number == int(value)))
                 invoices = Invoice.select().where(qs)
@@ -103,8 +102,7 @@ class InvoiceTableWidget(FTableWidget):
                     for invoice in clt.invoices().iterator():
                         invoices.append(invoice)
         else:
-            invoices = Invoice.select().order_by(Invoice.number.desc()).iterator()
-
+            invoices = Invoice.select()[:100]
         try:
             self.data = [(invoice.number, invoice.date,
                           invoice.client, "") for invoice in invoices]

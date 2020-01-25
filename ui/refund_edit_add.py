@@ -4,20 +4,20 @@
 from __future__ import (
     unicode_literals, absolute_import, division, print_function)
 
-import os
+# import os
 
 from PyQt4.QtCore import Qt, QDate
 from PyQt4.QtGui import (QIcon, QVBoxLayout, QFileDialog, QDialog, QTextEdit,
                          QIntValidator, QFormLayout, QPushButton, QCompleter)
 
-from configuration import Config
+# from configuration import Config
 
 from Common.ui.util import (
     check_is_empty, check_field, date_to_datetime, formatted_number)
+
 from Common.ui.common import (
-    FWidget, FPageTitle, Button_save, FormLabel, FLabel, LineEdit, IntLineEdit,
-    Warning_btt, FormatDate)
-import peewee
+    FWidget, FPageTitle, ButtonSave, FormLabel, FLabel, LineEdit, IntLineEdit,
+    WarningBtt, FormatDate)
 from models import Refund
 
 
@@ -81,7 +81,7 @@ class RefundEditAddDialog(QDialog, FWidget):
         formbox.addRow(FormLabel(u"Date : *"), self.refund_date_field)
         formbox.addRow(FormLabel(u"Montant : *"), self.amount_field)
 
-        butt = Button_save(u"Enregistrer")
+        butt = ButtonSave(u"Enregistrer")
         butt.clicked.connect(self.save_edit)
         formbox.addRow("", butt)
         # formbox.addRow("", "Le client {} n'est pas endetté")
