@@ -102,7 +102,7 @@ class InvoiceTableWidget(FTableWidget):
                     for invoice in clt.invoices().iterator():
                         invoices.append(invoice)
         else:
-            invoices = Invoice.select()[:100]
+            invoices = Invoice.select().order_by(Invoice.number.desc())[:100]
         try:
             self.data = [(invoice.number, invoice.date,
                           invoice.client, "") for invoice in invoices]
@@ -150,8 +150,7 @@ class BuyTableWidget(FTableWidget):
         self.refresh()
 
     def set_data_for(self):
-        self.data = [(buy.id, buy.date, "")
-                     for buy in Buy.select()]
+        self.data = [(buy.id, buy.date, "") for buy in Buy.select().order_by(Buy.id.desc())]
 
     def _item_for_data(self, row, column, data, context=None):
         if column == self.data[0].__len__() - 1:
