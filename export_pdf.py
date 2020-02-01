@@ -68,7 +68,7 @@ def pdf_view(invoice):
         print(items_invoice)
         for qtty, designation, amount, montant in items_invoice:
             # montant = qtty * amount
-            p.drawString(x + 43, y, str(cpt))
+            p.drawRightString(x + 50, y, str(cpt))
             p.drawString(x + 55, y, str(designation))
             p.drawRightString(
                 x + 378, y, str(formatted_number(qtty)))
