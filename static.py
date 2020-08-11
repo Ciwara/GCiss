@@ -32,7 +32,7 @@ class Constants(CConstants):
     pdf_source = "pdf_source.pdf"
     APP_NAME = M_GESTION
 
-    APP_VERSION = u"20.0"
+    APP_VERSION = u"20.01"
     APP_DATE = u"01/2020"
     img_media = os.path.join(ROOT_DIR, "static", "images/")
     APP_LOGO = os.path.join(img_media, "logo.png")
